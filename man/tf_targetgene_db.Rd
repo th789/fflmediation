@@ -6,8 +6,8 @@
 \title{Transcription Factor (TF)-Target Gene Interactions}
 \format{A DataFrame (1624664 x 4) with the following columns:
 \describe{
-\item{tf}{TF involved in the interaction}
-\item{targetgene}{target gene involved in the interaction (gene targeted by TF)}
+\item{tf}{TF involved in the interaction [Ensembl ID]}
+\item{targetgene}{target gene involved in the interaction (gene targeted by TF) [Ensembl ID]}
 \item{TRRUST}{indicator of whether interaction is in TRRUST v2.0 database}
 \item{ENCODE}{indicator of whether interaction is in ENCODE database}
 }}

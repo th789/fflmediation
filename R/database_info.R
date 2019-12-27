@@ -41,3 +41,25 @@
 #' \item{MIRANDA}{indicator of whether interaction is in miRanda v3.0 database}
 #' }
 "mirna_targetgene_db"
+
+###miRNA names
+#' @title miRNAs
+#' @description miRNAs covered among all databases
+#' @format Vector of miRNAs (4543 miRNAs)
+"names_mirna_db"
+
+
+###TF names
+#' @title Transcription Factors
+#' @description Transcription factors covered among all databases
+#' @format Vector of transcription factors (1149 transcription factors)
+"names_tf_db"
+
+
+###target genes
+#' @title Target Genes
+#' @description Target genes covered among all databases
+#' @format Vector of target genes (22183 target genes)
+"names_targetgene_db"
+
+
