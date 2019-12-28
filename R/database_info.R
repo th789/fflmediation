@@ -19,7 +19,7 @@
 #' @format A DataFrame (1624664 x 4) with the following columns:
 #' \describe{
 #' \item{tf}{TF involved in the interaction [Ensembl ID]}
-#' \item{targetgene}{target gene involved in the interaction (gene targeted by TF) [Ensembl ID]}
+#' \item{targetgene}{target gene involved in the interaction (gene targeted by TF), target genes include transcription factors [Ensembl ID]}
 #' \item{TRRUST}{indicator of whether interaction is in TRRUST v2.0 database}
 #' \item{ENCODE}{indicator of whether interaction is in ENCODE database}
 #' }
@@ -34,7 +34,7 @@
 #' @format A DataFrame (2477728 x 6) with the following columns:
 #' \describe{
 #' \item{mirna}{miRNA involved in the interaction [Accession Number]}
-#' \item{targetgene}{target gene involved in the interaction (gene targeted by miRNA) [Ensembl ID]}
+#' \item{targetgene}{target gene involved in the interaction (gene targeted by miRNA), target genes include transcription factors [Ensembl ID]}
 #' \item{TARGETSCAN}{indicator of whether interaction is in TargetScan v7.2 database}
 #' \item{MIRTARBASE}{indicator of whether interaction is in miRTarBase v7.0 database}
 #' \item{MIRDB}{indicator of whether interaction is in miRDB v6.0 database}
