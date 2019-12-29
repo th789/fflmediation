@@ -1,17 +1,20 @@
 globalVariables(c("mirna_targetgene_db", "tf_mirna_db", "tf_targetgene_db",
                   "names_mirna_db", "names_tf_db", "names_targetgene_db",
-                  "mirna", "targetgene"))
-
+                  "mirna", "targetgene",
+                  "lm"))
+#step1
 #' @import dplyr
-# for left_join, transmute
-
+#for left_join, transmute
 #' @import tidyr
-# for replace_na
+#for replace_na
+
+#step2
+#' @importFrom stats lm
 
 
 # 1. generate list of candidate ffls --------------------------------------
 
-#' @title candidate_ffls
+#' @title step1_candidate_ffls
 #' @description Generate candidate miRNA-FFLs and TF-FFLs
 #' @param mirna_expr Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format
 #' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID format
@@ -60,4 +63,75 @@ step1_candidate_ffls <- function(mirna_expr, mrna_expr){
   print(paste0(dim(ffls_mirna)[1], " candidate miRNA-FFLs"))
   print(paste0(dim(ffls_tf)[1], " candidate TF-FFLs"))
   return(c("mirna_ffls" = ffls_mirna, "tf_ffls" = ffls_tf))
+}
+
+
+
+# 2. mediation model ------------------------------------------------------
+
+#' @title step2_mediation
+#' @description Apply mediation model to each candidate FFL
+#' @param mirna_expr Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format
+#' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID format
+#' @param candidate_ffls Dataframe of candidate ffls (output from \code{\link{step1_candidate_ffls}})
+#' @param ffl_type Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL)
+#' @param alpha Significance level of coefficients in the mediation model's linear equations (default is 0.05)
+#' @return Vector of two dataframes (miRNA-FFLs and TF-FFLs)
+
+step2_mediation <- function(mirna_expr, mrna_expr,
+                            candidate_ffls, ffl_type = c("miRNA", "TF"),
+                            alpha = 0.05){
+  #####function for mirna-ffls
+  mediation_ffl_mirna <- function(row){
+    mirna <- t(mirna_expr[rownames(mirna_expr) == row["mirna"], ])
+    tf <- t(mrna_expr[rownames(mrna_expr) == row["tf"], ])
+    targetgene <- t(mrna_expr[rownames(mrna_expr) == row["targetgene"], ])
+    #model1: tf ~ mirna
+    model1 <- lm(tf ~ mirna)
+    alpha1 <- summary(model1)$coefficients["mirna", ]
+    model1_crit <- alpha1["Estimate"] < 0 & alpha1["Pr(>|t|)"] < alpha
+    #model2: targetgene ~ mirna
+    model2 <- lm(targetgene ~ mirna)
+    beta1 <- summary(model2)$coefficients["mirna", ]
+    model2_crit <- beta1["Estimate"] < 0 & beta1["Pr(>|t|)"] < alpha
+    #model3: gene ~ mirna + tf
+    model3 <- lm(targetgene ~ mirna + tf)
+    gamma1 <- summary(model3)$coefficients["mirna", ]
+    gamma2 <- summary(model3)$coefficients["tf", ]
+    model3_crit <- (gamma2["Estimate"] > 0 & gamma2["Pr(>|t|)"] < alpha) &
+      (gamma1["Estimate"] < 0 & gamma1["Pr(>|t|)"] < alpha & (abs(gamma1["Estimate"]) < abs(alpha1["Estimate"])))
+    #return whether loop meets all conditions
+    return(model1_crit & model2_crit & model3_crit)}
+
+  #####function for tf-ffls
+  mediation_ffl_tf <- function(row){
+    mirna <- t(mirna_expr[rownames(mirna_expr) == row["mirna"], ])
+    tf <- t(mrna_expr[rownames(mrna_expr) == row["tf"], ])
+    targetgene <- t(mrna_expr[rownames(mrna_expr) == row["targetgene"], ])
+    #model1: mirna ~ tf
+    model1 <- lm(mirna ~ tf)
+    alpha1 <- summary(model1)$coefficients["tf", ]
+    model1_crit <- alpha1["Estimate"] > 0 & alpha1["Pr(>|t|)"] < alpha
+    #model2: targetgene ~ tf
+    model2 <- lm(targetgene ~ tf)
+    beta1 <- summary(model2)$coefficients["tf", ]
+    model2_crit <- beta1["Estimate"] > 0 & beta1["Pr(>|t|)"] < alpha
+    #model3: gene ~ tf + mirna
+    model3 <- lm(targetgene ~ tf + mirna)
+    gamma1 <- summary(model3)$coefficients["tf", ]
+    gamma2 <- summary(model3)$coefficients["mirna", ]
+    model3_crit <- (gamma2["Estimate"] < 0 & gamma2["Pr(>|t|)"] < alpha) &
+      (gamma1["Estimate"] > 0 & gamma1["Pr(>|t|)"] < alpha & (abs(gamma1["Estimate"]) < abs(alpha1["Estimate"])))
+    #return whether loop meets all conditions
+    return(model1_crit & model2_crit & model3_crit)}
+
+  #####see if each ffl meets mediation model criteria
+  #if mirna-ffl, apply mirna-ffl function
+  if(ffl_type == "miRNA"){candidate_ffls$mediation_analysis <- apply(candidate_ffls, 1, mediation_ffl_mirna)}
+  #if tf-ffl, apply mirna-ffl function
+  if(ffl_type == "TF"){candidate_ffls$mediation_analysis <- apply(candidate_ffls, 1, mediation_ffl_tf)}
+  #return candidate ffls that meet criteria
+  ffls_mediation <- candidate_ffls[candidate_ffls$mediation_analysis, ]
+  print(paste0(dim(ffls_mediation)[1], "/", dim(candidate_ffls)[1], " candidate ", ffl_type, "-FFLs meet mediation model requirements"))
+  return(ffls_mediation)
 }
