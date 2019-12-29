@@ -1,6 +1,6 @@
 Package: fflmediation
 Type: Package
-Title: Predict Feed Forward Loops Using Mediation Analysis
+Title: Predict Feed Forward Loops in Gene Networks Using Mediation Analysis
 Version: 0.1.0
 Author: Tessa Han
 Maintainer: Tessa Han <than01@college.harvard.edu>
