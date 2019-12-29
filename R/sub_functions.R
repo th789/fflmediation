@@ -17,7 +17,7 @@ globalVariables(c("mirna_targetgene_db", "tf_mirna_db", "tf_targetgene_db",
 #' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID format
 #' @return Vector of two dataframes (miRNA-FFLs and TF-FFLs)
 
-candidate_ffls <- function(mirna_expr, mrna_expr){
+step1_candidate_ffls <- function(mirna_expr, mrna_expr){
   #####extract mirnas, tfs, and targetgenes from expression data
   names_mirna <- rownames(mirna_expr)[rownames(mirna_expr) %in% names_mirna_db]
   names_tf <- rownames(mrna_expr)[rownames(mrna_expr) %in% names_tf_db]
@@ -30,6 +30,7 @@ candidate_ffls <- function(mirna_expr, mrna_expr){
   #tf-targetgene arm
   #!!!!!subset of data -- need to efficiently merge both dfs (ffls_mirna & tf_targetgene_db)
   ffls_mirna <- merge(ffls_mirna, tf_targetgene_db[1:1000, ], by = "tf")
+  ffls_mirna <- ffls_mirna[ffls_mirna$targetgene %in% names_targetgene, ] #keep only triplets where targetgene is in the expr. data
   #mirna-targetgene arm
   ffls_mirna <- ffls_mirna %>%
     left_join(mirna_targetgene_db %>% transmute(mirna, targetgene, closed_loop = "yes")) %>%
@@ -45,6 +46,7 @@ candidate_ffls <- function(mirna_expr, mrna_expr){
   #tf-targetgene arm
   #!!!!!subset of data -- need to efficiently merge both dfs (ffls_tf & tf_targetgene_db)
   ffls_tf <- merge(ffls_tf, tf_targetgene_db[7000:10000, ], by = "tf")
+  ffls_tf <- ffls_tf[ffls_tf$targetgene %in% names_targetgene, ] #keep only triplets where targetgene is in the expr. data
   #mirna-targetgene arm
   ffls_tf <- ffls_tf %>%
     left_join(mirna_targetgene_db %>% transmute(mirna, targetgene, closed_loop = "yes")) %>%
@@ -57,5 +59,5 @@ candidate_ffls <- function(mirna_expr, mrna_expr){
   #####return candidate ffls
   print(paste0(dim(ffls_mirna)[1], " candidate miRNA-FFLs"))
   print(paste0(dim(ffls_tf)[1], " candidate TF-FFLs"))
-  return(c(ffls_mirna, ffls_tf))
+  return(c("mirna_ffls" = ffls_mirna, "tf_ffls" = ffls_tf))
 }
