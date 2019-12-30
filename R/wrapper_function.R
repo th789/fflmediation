@@ -4,9 +4,11 @@
 #' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID format
 #' @param ffl_type Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL)
 #' @param mediation_alpha Significance level of coefficients in the mediation model's linear equations (default is 0.05)
-#' @param num_bootstrap_samples Number of bootstrap samples (default is 1000)
+#' @param num_bootstrap_samples Number of bootstrap samples when calculating p(FFL) (default is 1000)
+#' @param num_permutations Number of permutations in permutation test (default is 1000)
+#' @param permutation_test_alpha Significance level of FFLs from permutation test (default is 0.05)
 #' @param seed random seed for bootstrapping and permutation test (default is 12345)
-#' @return !!!!!not sure yet: List of length X
+#' @return List (length = 3) containing three dataframes ("ffls_candidate" is a dataframe of candidate FFLs; "ffls_mediation" is a dataframe of candidate FFLs that meet mediation model conditions; "ffls_significant" is a dataframe of candidate FFLs that meet mediation model conditions and are statistically significant)
 #' @export
 
 #####predict_ffls

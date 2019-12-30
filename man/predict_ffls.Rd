@@ -5,7 +5,8 @@
 \title{predict_ffls}
 \usage{
 predict_ffls(mirna_expr, mrna_expr, ffl_type = c("miRNA", "TF"),
-  mediation_alpha = 0.05, num_bootstrap_samples = 1000, seed = 12345)
+  mediation_alpha = 0.05, num_bootstrap_samples = 1000, seed = 12345,
+  num_permutations, permutation_test_alpha)
 }
 \arguments{
 \item{mirna_expr}{Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format}
@@ -16,12 +17,16 @@ predict_ffls(mirna_expr, mrna_expr, ffl_type = c("miRNA", "TF"),
 
 \item{mediation_alpha}{Significance level of coefficients in the mediation model's linear equations (default is 0.05)}
 
-\item{num_bootstrap_samples}{Number of bootstrap samples (default is 1000)}
+\item{num_bootstrap_samples}{Number of bootstrap samples when calculating p(FFL) (default is 1000)}
 
 \item{seed}{random seed for bootstrapping and permutation test (default is 12345)}
+
+\item{num_permutations}{Number of permutations in permutation test (default is 1000)}
+
+\item{permutation_test_alpha}{Significance level of FFLs from permutation test (default is 0.05)}
 }
 \value{
-!!!!!not sure yet: List of length X
+List (length = 3) containing three dataframes ("ffls_candidate" is a dataframe of candidate FFLs; "ffls_mediation" is a dataframe of candidate FFLs that meet mediation model conditions; "ffls_significant" is a dataframe of candidate FFLs that meet mediation model conditions and are statistically significant)
 }
 \description{
 Predict FFLs using mediation model approach

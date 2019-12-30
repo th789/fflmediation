@@ -73,7 +73,7 @@ step1_candidate_ffls <- function(mirna_expr, mrna_expr, ffl_type = c("miRNA", "T
 #####fin
 
 
-# 2. mediation model ------------------------------------------------------
+# 2. identify FFLs that meet mediation model conditions -------------------------------
 
 #' @title mediation_ffl
 #' @description Determines whether a set of miRNA, TF, and target gene expression data meet the conditions of the mediation model
@@ -159,13 +159,13 @@ step2_mediation <- function(mirna_expr, mrna_expr,
 # 3. calculate p(FFL) through bootstrapping -------------------------------
 
 #' @title step3_pffl
-#' @description Calculate p(FFL) for FFLs that meet mediation model conditions
+#' @description Calculate p(FFL) for FFLs that meet mediation model conditions through bootstrapping
 #' @param mirna_expr Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format
 #' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID forma
 #' @param ffls Dataframe of FFLs that meet mediation model conditions (output of step2_mediation)
 #' @param ffl_type Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL
-#' @param num_bootstrap_samples Number of bootstrap samples
-#' @param seed random seed
+#' @param num_bootstrap_samples Number of bootstrap samples when calculating p(FFL) (default is 1000)
+#' @param seed Random seed
 #' @param alpha Significance level of coefficients in the mediation model's linear equations
 #' @return \code{ffls} dataframe with added column of p(FFL) values
 
@@ -192,10 +192,96 @@ step3_pffl <- function(mirna_expr, mrna_expr, ffls, ffl_type = c("miRNA", "TF"),
       #apply mediation model
       bootstrap_results[i] <- mediation_ffl(mirna = mirna_boot, tf = tf_boot, targetgene = targetgene_boot, ffl_type = ffl_type, alpha = alpha)
     }
+    #return p(FFL)
     return(mean(bootstrap_results))
   }
   #apply function to every row
   ffls$p_ffl <- apply(ffls, 1, step3_bootstrap)
+  return(ffls)
+}
+#####fin
+
+
+
+# 4. calculate statistical significance through permutation test ----------
+
+#' @title step4_permutation_test
+#' @description Calculate p-value associated with p(FFL) for FFLs that meet mediation model conditions through a permutation test
+#' @param mirna_expr Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format
+#' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID forma
+#' @param ffls Dataframe of FFLs that meet mediation model conditions (output of step2_mediation)
+#' @param ffl_type Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL
+#' @param num_permutations Number of permutations in permutation test (default is 1000)
+#' @param num_bootstrap_samples Number of bootstrap samples when calculating p(FFL) (default is 1000)
+#' @param alpha Significance level of coefficients in the mediation model's linear equations
+#' @param seed Random seed
+#' @return \code{ffls} dataframe with added column of p-values associated with p(FFL) values
+
+#####step4_permutation_test
+step4_permutation_test <- function(mirna_expr, mrna_expr, ffls, ffl_type = c("miRNA", "TF"),
+                                   num_permutations, num_bootstrap_samples, alpha, seed){
+  #####step4_bootstrap function: calculate p(FFL) of permuted data (used in step4_ffl_pval function)
+  step4_bootstrap <- function(expr_df, num_bootstrap_samples, ffl_type = c("miRNA", "TF"), alpha){
+    #set.seed(seed) #set seed in step4_permutation_test function
+    #vector to store result of each bootstrap sample
+    bootstrap_results <- rep(NA, num_bootstrap_samples)
+    #bootstrapping
+    for(i in 1:num_bootstrap_samples){
+      #bootstrap sample
+      rows <- 1:nrow(expr_df)
+      rows_boot <- sample(x = rows, size = length(rows), replace = TRUE)
+      expr_boot <- expr_df[rows_boot, ]
+      #apply mediation model, store results
+      bootstrap_results[i] <- mediation_ffl(mirna = expr_boot$mirna, tf = expr_boot$tf, targetgene = expr_boot$targetgene, ffl_type = ffl_type, alpha = alpha)
+    }
+    #return p(FFL)
+    return(mean(bootstrap_results))
+  }
+
+  #####step4_ffl_pval function: conduct permutation test for each ffl
+  step4_ffl_pval <- function(row){
+    #make expr (df with mirna, tf, and targetgene values for a row's ffl)
+    mirna <- t(mirna_expr[row["mirna"], ])
+    tf <- t(mrna_expr[row["tf"], ])
+    targetgene <- t(mrna_expr[row["targetgene"], ])
+    expr <- data.frame(mirna = mirna, tf = tf, targetgene = targetgene)
+    colnames(expr) <- c("mirna", "tf", "targetgene")
+
+    #empty vectors to store p(FFL) values of permuted data
+    pffl_perm_mirna_vector <- rep(NA, ceiling(num_permutations/4))
+    pffl_perm_tf_vector <- rep(NA, ceiling(num_permutations/4))
+    pffl_perm_targetgene_vector <- rep(NA, ceiling(num_permutations/4))
+    pffl_perm_all_vector <- rep(NA, ceiling(num_permutations/4))
+
+    ###permutation test
+    for(i in 1:ceiling(num_permutations/4)){
+      ###1. permute data -- shuffle 1) mirna; 2) tf; 3) targetgene; 4) mirna and tf
+      expr_perm_mirna <- data.frame(mirna = sample(expr$mirna), tf = expr$tf, targetgene = expr$targetgene)
+      expr_perm_tf <- data.frame(mirna = expr$mirna, tf = sample(expr$tf), targetgene = expr$targetgene)
+      expr_perm_targetgene <- data.frame(mirna = expr$mirna, tf = expr$tf, targetgene = sample(expr$targetgene))
+      expr_perm_all <- data.frame(mirna = sample(expr$mirna), tf = sample(expr$tf), targetgene = expr$targetgene)
+      ###2. calculate p(FFL) of permuted data -- through bootstrapping
+      pffl_perm_mirna <- step4_bootstrap(expr_perm_mirna, num_bootstrap_samples, ffl_type = ffl_type, alpha = alpha)
+      pffl_perm_tf <- step4_bootstrap(expr_perm_tf, num_bootstrap_samples, ffl_type = ffl_type, alpha = alpha)
+      pffl_perm_targetgene <- step4_bootstrap(expr_perm_targetgene, num_bootstrap_samples, ffl_type = ffl_type, alpha = alpha)
+      pffl_perm_all <- step4_bootstrap(expr_perm_all, num_bootstrap_samples, ffl_type = ffl_type, alpha = alpha)
+      #store results
+      pffl_perm_mirna_vector[i] <- pffl_perm_mirna
+      pffl_perm_tf_vector[i] <- pffl_perm_tf
+      pffl_perm_targetgene_vector[i] <- pffl_perm_targetgene
+      pffl_perm_all_vector[i] <- pffl_perm_all
+    }
+    #get p-value/percentile of observed p(FFL) among null p(FFL)s
+    perm_pffls <- c(pffl_perm_mirna_vector, pffl_perm_tf_vector, pffl_perm_targetgene_vector, pffl_perm_all_vector)
+    obs_pffl <- row["p_ffl"][[1]]
+    p_val <- mean(perm_pffls > obs_pffl)
+    return(p_val)
+  }
+
+  #####apply function to every row of ffls df
+  set.seed(seed)
+  ffls$p_val <- apply(ffls, 1, step4_ffl_pval)
+  #return ffls df with added column of p-values
   return(ffls)
 }
 #####fin
