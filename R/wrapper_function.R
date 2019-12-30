@@ -35,7 +35,7 @@ predict_ffls <- function(mirna_expr,
   if(dim(ffls_mediation)[1] == 0) stop(paste0("no candidate ", ffl_type, "-FFLs meet mediation model conditions"))
 
   #####3. for candidate ffls that meet mediation model conditions, calculate p(ffl) via bootstrapping
-  print(paste0("step 3: calculate p(FFL) of the ", dim(ffls_mediation)[1], " ", ffl_type, "-FFLs (that meet mediation model conditions) through bootstrapping"))
+  print(paste0("step 3: calculate p(FFL) of the ", ffl_type, "-FFLs that meet mediation model conditions through bootstrapping"))
   ffls_mediation <- step3_pffl(mirna_expr = mirna_expr,
                                mrna_expr = mrna_expr,
                                ffls = ffls_mediation,
@@ -45,7 +45,7 @@ predict_ffls <- function(mirna_expr,
                                alpha = mediation_alpha)
 
   #####4. for candidate ffls that meet mediation model conditions, calculate statistical significance via permutation test
-  print(paste0("step 4: calculate statistical significance of each ", ffl_type, "-FFL through permutation test"))
+  print(paste0("step 4: calculate statistical significance of the ", ffl_type, "-FFLs that meet mediation model conditions through permutation test"))
 
   ###!!!!!need to fix return, filler for now, need to add roxygen
   return(list("candidate_ffls" = candidate_ffls,
