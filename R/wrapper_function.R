@@ -11,26 +11,29 @@
 #' @return List (length = 3) containing three dataframes ("ffls_candidate" is a dataframe of candidate FFLs; "ffls_mediation" is a dataframe of candidate FFLs that meet mediation model conditions; "ffls_significant" is a dataframe of candidate FFLs that meet mediation model conditions and are statistically significant)
 #' @export
 
-#####predict_ffls
+#####predict_ffls function
 predict_ffls <- function(mirna_expr,
                          mrna_expr,
                          ffl_type = c("miRNA", "TF"),
                          mediation_alpha = 0.05,
                          num_bootstrap_samples = 1000,
+                         num_permutations = 1000,
+                         permutation_test_alpha = 0.05,
                          seed = 12345){
+  print("***analyses beginning***")
   #####1. generate list of candidate ffls
   print(paste0("step 1: generate list of candidate ", ffl_type, "-FFLs"))
-  candidate_ffls <- step1_candidate_ffls(mirna_expr = mirna_expr,
+  ffls_candidate <- step1_candidate_ffls(mirna_expr = mirna_expr,
                                          mrna_expr = mrna_expr,
                                          ffl_type = ffl_type)
   #error message
-  if(dim(candidate_ffls)[1] == 0) stop(paste0("no candidate ", ffl_type, "-FFLs predicted by databases"))
+  if(dim(ffls_candidate)[1] == 0) stop(paste0("no candidate ", ffl_type, "-FFLs predicted by databases"))
 
   #####2. use mediation model to evaluate each candidate ffls
   print(paste0("step 2: identify candidate ", ffl_type, "-FFLs that meet mediation model conditions"))
   ffls_mediation <- step2_mediation(mirna_expr = mirna_expr,
                                     mrna_expr = mrna_expr,
-                                    candidate_ffls = candidate_ffls,
+                                    candidate_ffls = ffls_candidate,
                                     ffl_type = ffl_type,
                                     alpha = mediation_alpha)
   #error message
@@ -48,9 +51,21 @@ predict_ffls <- function(mirna_expr,
 
   #####4. for candidate ffls that meet mediation model conditions, calculate statistical significance via permutation test
   print(paste0("step 4: calculate statistical significance of the ", ffl_type, "-FFLs that meet mediation model conditions through permutation test"))
+  ffls_mediation <- step4_permutation_test(mirna_expr = mirna_expr,
+                                           mrna_expr = mrna_expr,
+                                           ffls = ffls_mediation,
+                                           ffl_type = ffl_type,
+                                           num_permutations = num_permutations,
+                                           num_bootstrap_samples = num_bootstrap_samples,
+                                           alpha = mediation_alpha,
+                                           seed = seed)
+  #subset ffls_mediation that are statistically significant
+  ffls_significant <- ffls_mediation[ffls_mediation$p_val < permutation_test_alpha, ]
 
-  ###!!!!!need to fix return, filler for now, need to add roxygen
-  return(list("candidate_ffls" = candidate_ffls,
-              "ffls_mediation" = ffls_mediation))
+  #####5. return final results
+  print("***analyses complete***")
+  return(list("ffls_candidate" = ffls_candidate,
+              "ffls_mediation" = ffls_mediation,
+              "ffls_significant" = ffls_significant))
 }
 #####fin
