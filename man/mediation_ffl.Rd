@@ -4,8 +4,7 @@
 \alias{mediation_ffl}
 \title{mediation_ffl}
 \usage{
-mediation_ffl(mirna, tf, targetgene, ffl_type = c("miRNA", "TF"),
-  alpha = 0.05)
+mediation_ffl(mirna, tf, targetgene, ffl_type = c("miRNA", "TF"), alpha)
 }
 \arguments{
 \item{mirna}{Vector of miRNA expression data}
@@ -16,11 +15,11 @@ mediation_ffl(mirna, tf, targetgene, ffl_type = c("miRNA", "TF"),
 
 \item{ffl_type}{Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL)}
 
-\item{alpha}{Significance level of coefficients in the mediation model's linear equations (default is 0.05)}
+\item{alpha}{Significance level of coefficients in the mediation model's linear equations}
 }
 \value{
-Boolean indicating whether the set of miRNA, TF, and target gene expression data meet the requirements of the mediation model
+Boolean indicating whether the set of miRNA, TF, and target gene expression data meet the conditions of the mediation model
 }
 \description{
-Determines whether a set of miRNA, TF, and target gene expression data meet the requirements of the mediation model
+Determines whether a set of miRNA, TF, and target gene expression data meet the conditions of the mediation model
 }

@@ -5,7 +5,7 @@
 \title{step2_mediation}
 \usage{
 step2_mediation(mirna_expr, mrna_expr, candidate_ffls,
-  ffl_type = c("miRNA", "TF"), alpha = 0.05)
+  ffl_type = c("miRNA", "TF"), alpha)
 }
 \arguments{
 \item{mirna_expr}{Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format}
@@ -16,10 +16,10 @@ step2_mediation(mirna_expr, mrna_expr, candidate_ffls,
 
 \item{ffl_type}{Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL)}
 
-\item{alpha}{Significance level of coefficients in the mediation model's linear equations (default is 0.05)}
+\item{alpha}{Significance level of coefficients in the mediation model's linear equations}
 }
 \value{
-Dataframe of FFLs among candidate FFLs that meet the mediation model's requirements
+Dataframe of FFLs among candidate FFLs that meet the mediation model's conditions
 }
 \description{
 Apply mediation model to each candidate FFL

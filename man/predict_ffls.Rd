@@ -4,17 +4,24 @@
 \alias{predict_ffls}
 \title{predict_ffls}
 \usage{
-predict_ffls(mirna_expr, mrna_expr, mediation_alpha = 0.05)
+predict_ffls(mirna_expr, mrna_expr, ffl_type = c("miRNA", "TF"),
+  mediation_alpha = 0.05, num_bootstrap_samples = 1000, seed = 12345)
 }
 \arguments{
 \item{mirna_expr}{Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format}
 
 \item{mrna_expr}{Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID format}
 
+\item{ffl_type}{Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL)}
+
 \item{mediation_alpha}{Significance level of coefficients in the mediation model's linear equations (default is 0.05)}
+
+\item{num_bootstrap_samples}{Number of bootstrap samples (default is 1000)}
+
+\item{seed}{random seed for bootstrapping and permutation test (default is 12345)}
 }
 \value{
-!!!!!not sure yet
+!!!!!not sure yet: List of length X
 }
 \description{
 Predict FFLs using mediation model approach

@@ -5,26 +5,26 @@
 \title{step3_pffl}
 \usage{
 step3_pffl(mirna_expr, mrna_expr, ffls, ffl_type = c("miRNA", "TF"),
-  num_bootstrap_samples = 1000, seed = 12345, alpha = 0.05)
+  num_bootstrap_samples, seed, alpha)
 }
 \arguments{
 \item{mirna_expr}{Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format}
 
 \item{mrna_expr}{Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID forma}
 
-\item{ffls}{Dataframe of FFLs that meet mediation model requirements (output of step2_mediation)}
+\item{ffls}{Dataframe of FFLs that meet mediation model conditions (output of step2_mediation)}
 
 \item{ffl_type}{Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL}
 
-\item{num_bootstrap_samples}{Number of bootstrap samples (default is 1000)}
+\item{num_bootstrap_samples}{Number of bootstrap samples}
 
-\item{seed}{random seed (default is 12345)}
+\item{seed}{random seed}
 
-\item{alpha}{Significance level of coefficients in the mediation model's linear equations (default is 0.05)}
+\item{alpha}{Significance level of coefficients in the mediation model's linear equations}
 }
 \value{
 \code{ffls} dataframe with added column of p(FFL) values
 }
 \description{
-Calculate p(FFL) for FFLs that meet mediation model requirements
+Calculate p(FFL) for FFLs that meet mediation model conditions
 }
