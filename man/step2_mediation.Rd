@@ -19,7 +19,7 @@ step2_mediation(mirna_expr, mrna_expr, candidate_ffls,
 \item{alpha}{Significance level of coefficients in the mediation model's linear equations (default is 0.05)}
 }
 \value{
-Vector of two dataframes (miRNA-FFLs and TF-FFLs)
+Dataframe of FFLs among candidate FFLs that meet the mediation model's requirements
 }
 \description{
 Apply mediation model to each candidate FFL
