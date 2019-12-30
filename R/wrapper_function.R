@@ -4,7 +4,7 @@
 #' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID format
 #' @param mediation_alpha Significance level of coefficients in the mediation model's linear equations (default is 0.05)
 #' @return !!!!!not sure yet
-#' @export !!!!!not sure yet
+#' @export
 
 predict_ffls <- function(mirna_expr, mrna_expr, mediation_alpha = 0.05){
   #####1. generate list of candidate ffls

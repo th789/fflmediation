@@ -150,3 +150,46 @@ step2_mediation <- function(mirna_expr, mrna_expr,
 #####fin
 
 
+# 3. calculate p(FFL) through bootstrapping -------------------------------
+
+#' @title step3_pffl
+#' @description Calculate p(FFL) for FFLs that meet mediation model requirements
+#' @param mirna_expr Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format
+#' @param mrna_expr Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID forma
+#' @param ffls Dataframe of FFLs that meet mediation model requirements (output of step2_mediation)
+#' @param ffl_type Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL
+#' @param num_bootstrap_samples Number of bootstrap samples (default is 1000)
+#' @param seed random seed (default is 12345)
+#' @param alpha Significance level of coefficients in the mediation model's linear equations (default is 0.05)
+#' @return \code{ffls} dataframe with added column of p(FFL) values
+
+#####step3_pffl
+step3_pffl <- function(mirna_expr, mrna_expr, ffls, ffl_type = c("miRNA", "TF"),
+                       num_bootstrap_samples = 1000, seed = 12345, alpha = 0.05){
+  set.seed(seed)
+  #function to apply to each row
+  step3_bootstrap <- function(row){
+    #vector to store result of each bootstrap sample
+    bootstrap_results <- rep(NA, num_bootstrap_samples)
+    #bootstrapping
+    for(i in 1:num_bootstrap_samples){
+      #expression data
+      mirna <- t(mirna_expr[row["mirna"], ])
+      tf <- t(mrna_expr[row["tf"], ])
+      targetgene <- t(mrna_expr[row["targetgene"], ])
+      #bootstrap sample
+      sampleIDs <- colnames(mirna_expr)
+      sampleIDs_boot <- sample(x = sampleIDs, size = length(sampleIDs), replace = TRUE)
+      mirna_boot <- mirna[sampleIDs_boot, ]
+      tf_boot <- tf[sampleIDs_boot, ]
+      targetgene_boot <- targetgene[sampleIDs_boot, ]
+      #apply mediation model
+      bootstrap_results[i] <- mediation_ffl(mirna = mirna_boot, tf = tf_boot, targetgene = targetgene_boot, ffl_type = ffl_type, alpha = alpha)
+    }
+    return(mean(bootstrap_results))
+  }
+  #apply function to every row
+  ffls$p_ffl <- apply(ffls, 1, step3_bootstrap)
+  return(ffls)
+}
+#####fin
