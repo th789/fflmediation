@@ -4,12 +4,14 @@
 \alias{step1_candidate_ffls}
 \title{step1_candidate_ffls}
 \usage{
-step1_candidate_ffls(mirna_expr, mrna_expr)
+step1_candidate_ffls(mirna_expr, mrna_expr, ffl_type = c("miRNA", "TF"))
 }
 \arguments{
 \item{mirna_expr}{Dataframe (miRNA x samples) of miRNA expression data with miRNAs in accession number format}
 
 \item{mrna_expr}{Dataframe (mRNA x samples) of mRNA expression data with genes in EnsemblID format}
+
+\item{ffl_type}{Character ("miRNA" or "TF") indicating the FFL type (miRNA-FFL or TF-FFL)}
 }
 \value{
 Vector of two dataframes (miRNA-FFLs and TF-FFLs)
