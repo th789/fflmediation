@@ -3,14 +3,17 @@ globalVariables(c("mirna_targetgene_db", "tf_mirna_db", "tf_targetgene_db",
                   "mirna", "targetgene",
                   "lm", "mapIds"))
 #step1
-#' @import dplyr
-#for left_join, transmute
+# #' @import dplyr
+# #for left_join, transmute
+#' @importFrom dplyr left_join
+#' @importFrom dplyr transmute
+
 #' @import tidyr
 #for replace_na
 #' @import org.Hs.eg.db
-#for mapIds
 #' @import miRBaseConverter
 #for miRNA_AccessionToName
+#' @import AnnotationDbi
 
 
 #step2

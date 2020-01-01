@@ -2,9 +2,11 @@
 
 export(hello)
 export(predict_ffls)
-import(dplyr)
+import(AnnotationDbi)
 import(miRBaseConverter)
 import(org.Hs.eg.db)
 import(pbapply)
 import(tidyr)
+importFrom(dplyr,left_join)
+importFrom(dplyr,transmute)
 importFrom(stats,lm)
