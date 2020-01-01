@@ -12,7 +12,6 @@
 #expression data
 load(file = "/Users/than/Dropbox/research/work_draft/expression_data_subgroups.rda")
 
-
 t1114_results_mirna <- predict_ffls(mirna_expr = miRNA_t1114,
                                     mrna_expr = mRNA_t1114,
                                     ffl_type = "miRNA",
