@@ -3,5 +3,7 @@
 export(hello)
 export(predict_ffls)
 import(dplyr)
+import(miRBaseConverter)
+import(org.Hs.eg.db)
 import(tidyr)
 importFrom(stats,lm)

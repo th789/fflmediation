@@ -1,12 +1,17 @@
 globalVariables(c("mirna_targetgene_db", "tf_mirna_db", "tf_targetgene_db",
                   "names_mirna_db", "names_tf_db", "names_targetgene_db",
                   "mirna", "targetgene",
-                  "lm"))
+                  "lm", "mapIds"))
 #step1
 #' @import dplyr
 #for left_join, transmute
 #' @import tidyr
 #for replace_na
+#' @import org.Hs.eg.db
+#for mapIds
+#' @import miRBaseConverter
+#for miRNA_AccessionToName
+
 
 #step2
 #' @importFrom stats lm
@@ -42,8 +47,13 @@ step1_candidate_ffls <- function(mirna_expr, mrna_expr, ffl_type = c("miRNA", "T
       replace_na(list(closed_loop = "no")) #check whether mirna-targetgene pair of triplet is in mirna_targetgene_db
     #keep candidate ffls
     ffls_mirna <- ffls_mirna[ffls_mirna$closed_loop == "yes", ]
+    #add mirna_name, tf_symbol, targetgene_symbol columns
+    mirna_name_df <- miRNA_AccessionToName(ffls_mirna$mirna, targetVersion = "v22") #mirna
+    ffls_mirna$mirna_name <- mirna_name_df$TargetName
+    ffls_mirna$tf_symbol <- mapIds(org.Hs.eg.db, keys = ffls_mirna$tf, column = c("SYMBOL"), keytype = "ENSEMBL") #tf
+    ffls_mirna$targetgene_symbol <- mapIds(org.Hs.eg.db, keys = ffls_mirna$targetgene, column = c("SYMBOL"), keytype = "ENSEMBL") #targetgene
     #re-order columns, drop "closed_loop" column
-    ffls_mirna <- ffls_mirna[c("mirna", "tf", "targetgene", "TARGETSCAN", "MIRTARBASE", "MIRDB", "MIRANDA", "TRRUST", "ENCODE")]
+    ffls_mirna <- ffls_mirna[c("mirna", "tf", "targetgene", "mirna_name", "tf_symbol", "targetgene_symbol", "TARGETSCAN", "MIRTARBASE", "MIRDB", "MIRANDA", "TRRUST", "ENCODE")]
     #####return candidate ffls
     print(paste0(dim(ffls_mirna)[1], " candidate miRNA-FFLs"))
     return(ffls_mirna)
@@ -63,8 +73,13 @@ step1_candidate_ffls <- function(mirna_expr, mrna_expr, ffl_type = c("miRNA", "T
       replace_na(list(closed_loop = "no")) #check whether mirna-targetgene pair of triplet is in mirna_targetgene_db
     #keep candidate ffls
     ffls_tf <- ffls_tf[ffls_tf$closed_loop == "yes", ]
+    #add mirna_name, tf_symbol, targetgene_symbol columns
+    mirna_name_df <- miRNA_AccessionToName(ffls_tf$mirna, targetVersion = "v22") #mirna
+    ffls_tf$mirna_name <- mirna_name_df$TargetName
+    ffls_tf$tf_symbol <- mapIds(org.Hs.eg.db, keys = ffls_tf$tf, column = c("SYMBOL"), keytype = "ENSEMBL") #tf
+    ffls_tf$targetgene_symbol <- mapIds(org.Hs.eg.db, keys = ffls_tf$targetgene, column = c("SYMBOL"), keytype = "ENSEMBL") #targetgene
     #re-order columns, drop "closed_loop" column
-    ffls_tf <- ffls_tf[c("tf", "mirna", "targetgene", "TRANSMIR", "TRRUST", "ENCODE")]
+    ffls_tf <- ffls_tf[c("tf", "mirna", "targetgene", "tf_symbol", "mirna_name", "targetgene_symbol", "TRANSMIR", "TRRUST", "ENCODE")]
     #####return candidate ffls
     print(paste0(dim(ffls_tf)[1], " candidate TF-FFLs"))
     return(ffls_tf)
