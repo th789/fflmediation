@@ -20,7 +20,7 @@ predict_ffls <- function(mirna_expr,
                          num_permutations = 1000,
                          permutation_test_alpha = 0.05,
                          seed = 12345){
-  print("***analyses beginning***")
+  print("***analysis begins***")
   #####1. generate list of candidate ffls
   print(paste0("step 1: generate list of candidate ", ffl_type, "-FFLs"))
   ffls_candidate <- step1_candidate_ffls(mirna_expr = mirna_expr,
@@ -36,36 +36,43 @@ predict_ffls <- function(mirna_expr,
                                     candidate_ffls = ffls_candidate,
                                     ffl_type = ffl_type,
                                     alpha = mediation_alpha)
-  #error message
-  if(dim(ffls_mediation)[1] == 0) stop(paste0("no candidate ", ffl_type, "-FFLs meet mediation model conditions"))
+  #if no candidate ffls meet mediation model conditions, end here (return df of candidate ffls)
+  if(dim(ffls_mediation)[1] == 0){
+    print(paste0("0 candidate ", ffl_type, "-FFLs meet mediation model conditions"))
+    print("***analysis completed***")
+    return(list("ffls_candidate" = ffls_candidate))
+  }
 
-  #####3. for candidate ffls that meet mediation model conditions, calculate p(ffl) via bootstrapping
-  print(paste0("step 3: calculate p(FFL) of the ", ffl_type, "-FFLs that meet mediation model conditions through bootstrapping"))
-  ffls_mediation <- step3_pffl(mirna_expr = mirna_expr,
-                               mrna_expr = mrna_expr,
-                               ffls = ffls_mediation,
-                               ffl_type = ffl_type,
-                               num_bootstrap_samples = num_bootstrap_samples,
-                               seed = seed,
-                               alpha = mediation_alpha)
+  #if at least one candidate ffl meets mediation model conditions, proceed to step3 and step4
+  if(dim(ffls_mediation)[1] > 0){
+    #####3. for candidate ffls that meet mediation model conditions, calculate p(ffl) via bootstrapping
+    print(paste0("step 3: calculate p(FFL) of the ", ffl_type, "-FFLs that meet mediation model conditions through bootstrapping"))
+    ffls_mediation <- step3_pffl(mirna_expr = mirna_expr,
+                                 mrna_expr = mrna_expr,
+                                 ffls = ffls_mediation,
+                                 ffl_type = ffl_type,
+                                 num_bootstrap_samples = num_bootstrap_samples,
+                                 seed = seed,
+                                 alpha = mediation_alpha)
 
-  #####4. for candidate ffls that meet mediation model conditions, calculate statistical significance via permutation test
-  print(paste0("step 4: calculate statistical significance of the ", ffl_type, "-FFLs that meet mediation model conditions through permutation test"))
-  ffls_mediation <- step4_permutation_test(mirna_expr = mirna_expr,
-                                           mrna_expr = mrna_expr,
-                                           ffls = ffls_mediation,
-                                           ffl_type = ffl_type,
-                                           num_permutations = num_permutations,
-                                           num_bootstrap_samples = num_bootstrap_samples,
-                                           alpha = mediation_alpha,
-                                           seed = seed)
-  #subset ffls_mediation that are statistically significant
-  ffls_significant <- ffls_mediation[ffls_mediation$p_val < permutation_test_alpha, ]
+    #####4. for candidate ffls that meet mediation model conditions, calculate statistical significance via permutation test
+    print(paste0("step 4: calculate statistical significance of the ", ffl_type, "-FFLs that meet mediation model conditions through permutation test"))
+    ffls_mediation <- step4_permutation_test(mirna_expr = mirna_expr,
+                                             mrna_expr = mrna_expr,
+                                             ffls = ffls_mediation,
+                                             ffl_type = ffl_type,
+                                             num_permutations = num_permutations,
+                                             num_bootstrap_samples = num_bootstrap_samples,
+                                             alpha = mediation_alpha,
+                                             seed = seed)
+    #subset ffls_mediation that are statistically significant
+    ffls_significant <- ffls_mediation[ffls_mediation$p_val < permutation_test_alpha, ]
 
-  #####5. return final results
-  print("***analyses complete***")
-  return(list("ffls_candidate" = ffls_candidate,
-              "ffls_mediation" = ffls_mediation,
-              "ffls_significant" = ffls_significant))
+    #####5. return final results
+    print("***analysis completed***")
+    return(list("ffls_candidate" = ffls_candidate,
+                "ffls_mediation" = ffls_mediation,
+                "ffls_significant" = ffls_significant))
+  }
 }
 #####fin
