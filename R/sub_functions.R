@@ -172,7 +172,6 @@ step2_mediation <- function(mirna_expr, mrna_expr,
 #####step3_pffl
 step3_pffl <- function(mirna_expr, mrna_expr, ffls, ffl_type = c("miRNA", "TF"),
                        num_bootstrap_samples, seed, alpha){
-  set.seed(seed)
   #function to apply to each row
   step3_bootstrap <- function(row){
     #vector to store result of each bootstrap sample
@@ -196,6 +195,7 @@ step3_pffl <- function(mirna_expr, mrna_expr, ffls, ffl_type = c("miRNA", "TF"),
     return(mean(bootstrap_results))
   }
   #apply function to every row
+  set.seed(seed)
   ffls$p_ffl <- apply(ffls, 1, step3_bootstrap)
   return(ffls)
 }
