@@ -15,6 +15,8 @@ globalVariables(c("mirna_targetgene_db", "tf_mirna_db", "tf_targetgene_db",
 
 #step2
 #' @importFrom stats lm
+#' @import pbapply
+#for pbapply
 
 
 # 1. generate list of candidate ffls --------------------------------------
@@ -162,7 +164,7 @@ step2_mediation <- function(mirna_expr, mrna_expr,
     return(ffl_meet_conditions)}
 
   #####see if each ffl meets mediation model criteria
-  candidate_ffls$mediation_analysis <- apply(candidate_ffls, 1, mediation_ffl_row)
+  candidate_ffls$mediation_analysis <- pbapply(candidate_ffls, 1, mediation_ffl_row)
   #return candidate ffls that meet criteria
   ffls_mediation <- candidate_ffls[candidate_ffls$mediation_analysis, ]
   print(paste0(dim(ffls_mediation)[1], "/", dim(candidate_ffls)[1], " candidate ", ffl_type, "-FFLs meet mediation model conditions"))
@@ -211,7 +213,7 @@ step3_pffl <- function(mirna_expr, mrna_expr, ffls, ffl_type = c("miRNA", "TF"),
   }
   #apply function to every row
   set.seed(seed)
-  ffls$p_ffl <- apply(ffls, 1, step3_bootstrap)
+  ffls$p_ffl <- pbapply(ffls, 1, step3_bootstrap)
   return(ffls)
 }
 #####fin
@@ -295,7 +297,7 @@ step4_permutation_test <- function(mirna_expr, mrna_expr, ffls, ffl_type = c("mi
 
   #####apply function to every row of ffls df
   set.seed(seed)
-  ffls$p_val <- apply(ffls, 1, step4_ffl_pval)
+  ffls$p_val <- pbapply(ffls, 1, step4_ffl_pval)
   #return ffls df with added column of p-values
   return(ffls)
 }
