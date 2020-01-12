@@ -12,6 +12,7 @@ LazyData: true
 RoxygenNote: 6.1.1
 Depends: 
     R (>= 2.10)
-Imports: dplyr, tidyr, stats, org.Hs.eg.db, miRBaseConverter, pbapply, AnnotationDbi
+#Imports: dplyr, tidyr, stats, org.Hs.eg.db, miRBaseConverter, pbapply, AnnotationDbi
+Imports: parallel, stats, boot, foreach, iterators, doParallel, snow, org.Hs.eg.db, miRBaseConverter, AnnotationDbi
 
     
