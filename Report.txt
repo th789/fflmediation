@@ -1,0 +1,3 @@
+Time taken 81.502 -0.61 -589.672 -4.267 -0.695Type: EXEC 
+Type: EXEC 
+2020-01-13 21:32:42: Processing block 2 of 3
