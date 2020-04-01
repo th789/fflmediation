@@ -12,6 +12,4 @@ LazyData: true
 RoxygenNote: 6.1.1
 Depends: 
     R (>= 2.10)
-Imports: parallel, foreach, doParallel, AnnotationDbi, org.Hs.eg.db, miRBaseConverter, boot
-
-    
+Imports: boot, stats, parallel, foreach, iterators, doParallel, org.Hs.eg.db, miRBaseConverter, AnnotationDbi
