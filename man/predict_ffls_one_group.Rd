@@ -12,13 +12,13 @@ predict_ffls_one_group(mirna_expr, mrna_expr, ffl_type = c("miRNA",
   seed = 12345)
 }
 \arguments{
-\item{mirna_expr}{miRNA expression data (dataframe: miRNAs x samples, see sample_mirna_expr)}
+\item{mirna_expr}{miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr})}
 
-\item{mrna_expr}{mRNA expression data (dataframe: mRNAs x samples, see sample_mrna_expr)}
+\item{mrna_expr}{mRNA expression data (dataframe: mRNAs x samples, see \code{sample_mrna_expr})}
 
 \item{ffl_type}{FFL type (character: "miRNA" or "TF")}
 
-\item{candidate_ffls}{candidate FFLs (dataframe: candidate FFLs x 10, see sample_candidate_ffls)}
+\item{candidate_ffls}{candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})}
 
 \item{first_row}{first row of candidate FFL dataframe to include in analyses (integer: default = 1)}
 

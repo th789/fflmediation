@@ -12,17 +12,17 @@ predict_ffls_two_groups(mirna_expr_g1, mrna_expr_g1, mirna_expr_g2,
   "BH", "BY", "fdr", "none"), seed = 12345)
 }
 \arguments{
-\item{mirna_expr_g1}{Group 1's miRNA expression data (dataframe: miRNAs x samples)}
+\item{mirna_expr_g1}{Group 1's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g1})}
 
-\item{mrna_expr_g1}{Group 1's mRNA expression data (dataframe: mRNAs x samples)}
+\item{mrna_expr_g1}{Group 1's mRNA expression data (dataframe: mRNAs x samples, see \code{sample_mrna_expr_g1})}
 
-\item{mirna_expr_g2}{Group 2's miRNA expression data (dataframe: miRNAs x samples, see sample_mirna_expr)}
+\item{mirna_expr_g2}{Group 2's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g2})}
 
-\item{mrna_expr_g2}{Group 2's miRNA expression data (dataframe: miRNAs x samples, see sample_mirna_expr)}
+\item{mrna_expr_g2}{Group 2's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g2})}
 
 \item{ffl_type}{FFL type (character: "miRNA" or "TF")}
 
-\item{candidate_ffls}{candidate FFLs (dataframe: candidate FFLs x 10, see sample_candidate_ffls)}
+\item{candidate_ffls}{candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})}
 
 \item{first_row}{first row of candidate FFL dataframe to include in analyses (integer: default = 1)}
 

@@ -18,10 +18,10 @@ globalVariables(c("i"))
 #' @title predict_ffls_one_group
 #' @description function to predict FFLs in one biological group
 #'
-#' @param mirna_expr miRNA expression data (dataframe: miRNAs x samples, see sample_mirna_expr)
-#' @param mrna_expr mRNA expression data (dataframe: mRNAs x samples, see sample_mrna_expr)
+#' @param mirna_expr miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr})
+#' @param mrna_expr mRNA expression data (dataframe: mRNAs x samples, see \code{sample_mrna_expr})
 #' @param ffl_type FFL type (character: "miRNA" or "TF")
-#' @param candidate_ffls candidate FFLs (dataframe: candidate FFLs x 10, see sample_candidate_ffls)
+#' @param candidate_ffls candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})
 #' @param first_row first row of candidate FFL dataframe to include in analyses (integer: default = 1)
 #' @param last_row last row of candidate FFL dataframe to include in analyses (integer: default = nrow(candidate_ffls))
 #' @param num_bootstrap_samples number of bootstrap samples (integer: default = 1000)
@@ -188,8 +188,8 @@ predict_ffls_one_group <- function(mirna_expr, mrna_expr,
 
   #add mirna, tf, targetgene names
   if(dim(predicted_ffls)[1] > 0){
-    predicted_ffls$targetgene_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$targetgene, column = c("ALIAS"), keytype = "ENSEMBL")
-    predicted_ffls$tf_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$tf, column = c("ALIAS"), keytype = "ENSEMBL")
+    predicted_ffls$targetgene_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$targetgene, column = c("SYMBOL"), keytype = "ENSEMBL")
+    predicted_ffls$tf_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$tf, column = c("SYMBOL"), keytype = "ENSEMBL")
     predicted_ffls$mirna_name <- miRNA_AccessionToName(predicted_ffls$mirna, targetVersion = "v22")$TargetName
     predicted_ffls$p_value_adj <- p.adjust(predicted_ffls$p_value, method = p_value_adjust_method)
     predicted_ffls[order(predicted_ffls$p_value_adj), ] #order rows based on adjusted p-value

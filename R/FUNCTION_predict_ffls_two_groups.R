@@ -6,12 +6,12 @@
 #' @title predict_ffls_two_groups
 #' @description function to predict FFLs unique to one of two biological groups
 #'
-#' @param mirna_expr_g1 Group 1's miRNA expression data (dataframe: miRNAs x samples)
-#' @param mrna_expr_g1 Group 1's mRNA expression data (dataframe: mRNAs x samples)
-#' @param mirna_expr_g2 Group 2's miRNA expression data (dataframe: miRNAs x samples, see sample_mirna_expr)
-#' @param mrna_expr_g2 Group 2's miRNA expression data (dataframe: miRNAs x samples, see sample_mirna_expr)
+#' @param mirna_expr_g1 Group 1's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g1})
+#' @param mrna_expr_g1 Group 1's mRNA expression data (dataframe: mRNAs x samples, see \code{sample_mrna_expr_g1})
+#' @param mirna_expr_g2 Group 2's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g2})
+#' @param mrna_expr_g2 Group 2's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g2})
 #' @param ffl_type FFL type (character: "miRNA" or "TF")
-#' @param candidate_ffls candidate FFLs (dataframe: candidate FFLs x 10, see sample_candidate_ffls)
+#' @param candidate_ffls candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})
 #' @param first_row first row of candidate FFL dataframe to include in analyses (integer: default = 1)
 #' @param last_row last row of candidate FFL dataframe to include in analyses (integer: default = nrow(candidate_ffls))
 #' @param num_bootstrap_samples number of bootstrap samples (integer: default = 1000)
@@ -21,6 +21,7 @@
 #'
 #' @return candidate FFLs with delta-pFFLs and p-values (dataframe: candidate FFLs x 18, see sample output)
 #' @export
+
 
 predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1,
                                     mirna_expr_g2, mrna_expr_g2,
@@ -199,8 +200,8 @@ predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1,
 
   #add mirna, tf, targetgene names
   if(dim(predicted_ffls)[1] > 0){
-    predicted_ffls$targetgene_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$targetgene, column = c("ALIAS"), keytype = "ENSEMBL")
-    predicted_ffls$tf_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$tf, column = c("ALIAS"), keytype = "ENSEMBL")
+    predicted_ffls$targetgene_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$targetgene, column = c("SYMBOL"), keytype = "ENSEMBL")
+    predicted_ffls$tf_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$tf, column = c("SYMBOL"), keytype = "ENSEMBL")
     predicted_ffls$mirna_name <- miRNA_AccessionToName(predicted_ffls$mirna, targetVersion = "v22")$TargetName
     predicted_ffls$p_value_adj <- p.adjust(predicted_ffls$p_value, method = p_value_adjust_method)
     predicted_ffls[order(predicted_ffls$p_value_adj), ] #order rows based on adjusted p-value
