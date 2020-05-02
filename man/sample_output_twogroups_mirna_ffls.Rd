@@ -23,6 +23,7 @@
 \item{MIRANDA}{indicator of whether miRNA-target gene or miRNA-TF interaction is in miRanda v3.0 database}
 \item{TRRUST}{indicator of whether TF-target gene or miRNA-TF interaction is in TRRUST v2.0 database}
 \item{ENCODE}{indicator of whether TF-target gene or miRNA-TF interaction is in ENCODE database}
+\item{remaining columns}{estimate, standard error (se), t-statistic (t), and p-value of regression coefficients for group1 and group2}
 }}
 \usage{
 sample_output_twogroups_mirna_ffls

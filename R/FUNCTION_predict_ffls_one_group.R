@@ -137,6 +137,111 @@ predict_ffls_one_group <- function(mirna_expr, mrna_expr,
     tf <- t(mrna_expr[row[["tf"]], ])
     targetgene <- t(mrna_expr[row[["targetgene"]], ])
 
+    ######step2. calculate regression models, store coefficients
+    if(ffl_type == "miRNA"){
+      #model1: M ~ X (tf ~ mirna)
+      model1 <- lm(tf ~ mirna)
+      alpha0 <- summary(model1)$coefficients["(Intercept)", ]
+      alpha1 <- summary(model1)$coefficients["mirna", ]
+      #model2: Y ~ X (targetgene ~ mirna)
+      model2 <- lm(targetgene ~ mirna)
+      beta0 <- summary(model2)$coefficients["(Intercept)", ]
+      beta1 <- summary(model2)$coefficients["mirna", ]
+      #model3: Y ~ X + M (targetgene ~ mirna + tf)
+      model3 <- lm(targetgene ~ mirna + tf)
+      gamma0 <- summary(model3)$coefficients["(Intercept)", ]
+      gamma1 <- summary(model3)$coefficients["mirna", ]
+      gamma2 <- summary(model3)$coefficients["tf", ]
+      #store coefficients
+      #alpha0
+      row[["alpha0_estimate"]] <- alpha0["Estimate"]
+      row[["alpha0_se"]] <- alpha0["Std. Error"]
+      row[["alpha0_t"]] <- alpha0["t value"]
+      row[["alpha0_p_value"]] <- alpha0["Pr(>|t|)"]
+      #alpha1
+      row[["alpha1_estimate"]] <- alpha1["Estimate"]
+      row[["alpha1_se"]] <- alpha1["Std. Error"]
+      row[["alpha1_t"]] <- alpha1["t value"]
+      row[["alpha1_p_value"]] <- alpha1["Pr(>|t|)"]
+      #beta0
+      row[["beta0_estimate"]] <- beta0["Estimate"]
+      row[["beta0_se"]] <- beta0["Std. Error"]
+      row[["beta0_t"]] <- beta0["t value"]
+      row[["beta0_p_value"]] <- beta0["Pr(>|t|)"]
+      #beta1
+      row[["beta1_estimate"]] <- beta1["Estimate"]
+      row[["beta1_se"]] <- beta1["Std. Error"]
+      row[["beta1_t"]] <- beta1["t value"]
+      row[["beta1_p_value"]] <- beta1["Pr(>|t|)"]
+      #gamma0
+      row[["gamma0_estimate"]] <- gamma0["Estimate"]
+      row[["gamma0_se"]] <- gamma0["Std. Error"]
+      row[["gamma0_t"]] <- gamma0["t value"]
+      row[["gamma0_p_value"]] <- gamma0["Pr(>|t|)"]
+      #gamma1
+      row[["gamma1_estimate"]] <- gamma1["Estimate"]
+      row[["gamma1_se"]] <- gamma1["Std. Error"]
+      row[["gamma1_t"]] <- gamma1["t value"]
+      row[["gamma1_p_value"]] <- gamma1["Pr(>|t|)"]
+      #gamma2
+      row[["gamma2_estimate"]] <- gamma2["Estimate"]
+      row[["gamma2_se"]] <- gamma2["Std. Error"]
+      row[["gamma2_t"]] <- gamma2["t value"]
+      row[["gamma2_p_value"]] <- gamma2["Pr(>|t|)"]
+    }
+    ###tf-ffls
+    if(ffl_type == "TF"){
+      #model1: M ~ X (mirna ~ tf)
+      model1 <- lm(mirna ~ tf)
+      alpha0 <- summary(model1)$coefficients["(Intercept)", ]
+      alpha1 <- summary(model1)$coefficients["tf", ]
+      #model2: Y ~ X (targetgene ~ tf)
+      model2 <- lm(targetgene ~ tf)
+      beta0 <- summary(model2)$coefficients["(Intercept)", ]
+      beta1 <- summary(model2)$coefficients["tf", ]
+      #model3: Y ~ X + M (gene ~ tf + mirna)
+      model3 <- lm(targetgene ~ tf + mirna)
+      gamma0 <- summary(model3)$coefficients["(Intercept)", ]
+      gamma1 <- summary(model3)$coefficients["tf", ]
+      gamma2 <- summary(model3)$coefficients["mirna", ]
+      #store coefficients
+      #alpha0
+      row[["alpha0_estimate"]] <- alpha0["Estimate"]
+      row[["alpha0_se"]] <- alpha0["Std. Error"]
+      row[["alpha0_t"]] <- alpha0["t value"]
+      row[["alpha0_p_value"]] <- alpha0["Pr(>|t|)"]
+      #alpha1
+      row[["alpha1_estimate"]] <- alpha1["Estimate"]
+      row[["alpha1_se"]] <- alpha1["Std. Error"]
+      row[["alpha1_t"]] <- alpha1["t value"]
+      row[["alpha1_p_value"]] <- alpha1["Pr(>|t|)"]
+      #beta0
+      row[["beta0_estimate"]] <- beta0["Estimate"]
+      row[["beta0_se"]] <- beta0["Std. Error"]
+      row[["beta0_t"]] <- beta0["t value"]
+      row[["beta0_p_value"]] <- beta0["Pr(>|t|)"]
+      #beta1
+      row[["beta1_estimate"]] <- beta1["Estimate"]
+      row[["beta1_se"]] <- beta1["Std. Error"]
+      row[["beta1_t"]] <- beta1["t value"]
+      row[["beta1_p_value"]] <- beta1["Pr(>|t|)"]
+      #gamma0
+      row[["gamma0_estimate"]] <- gamma0["Estimate"]
+      row[["gamma0_se"]] <- gamma0["Std. Error"]
+      row[["gamma0_t"]] <- gamma0["t value"]
+      row[["gamma0_p_value"]] <- gamma0["Pr(>|t|)"]
+      #gamma1
+      row[["gamma1_estimate"]] <- gamma1["Estimate"]
+      row[["gamma1_se"]] <- gamma1["Std. Error"]
+      row[["gamma1_t"]] <- gamma1["t value"]
+      row[["gamma1_p_value"]] <- gamma1["Pr(>|t|)"]
+      #gamma2
+      row[["gamma2_estimate"]] <- gamma2["Estimate"]
+      row[["gamma2_se"]] <- gamma2["Std. Error"]
+      row[["gamma2_t"]] <- gamma2["t value"]
+      row[["gamma2_p_value"]] <- gamma2["Pr(>|t|)"]
+    }
+
     #####step3. calculate p(FFL)
     #create expression df (expr_data)
     expr_data <- data.frame(mirna, tf, targetgene)
@@ -197,13 +302,27 @@ predict_ffls_one_group <- function(mirna_expr, mrna_expr,
     if(ffl_type == "miRNA"){
       col_order <- c("mirna_name", "tf_name", "targetgene_name", "pFFL", "p_value_adj", "p_value",
                      "mirna", "tf", "targetgene", "TARGETSCAN", "MIRTARBASE", "MIRDB",
-                     "MIRANDA", "TRRUST", "ENCODE")
+                     "MIRANDA", "TRRUST", "ENCODE",
+                     "alpha0_estimate", "alpha0_se", "alpha0_t", "alpha0_p_value",
+                     "alpha1_estimate", "alpha1_se", "alpha1_t", "alpha1_p_value",
+                     "beta0_estimate", "beta0_se", "beta0_t", "beta0_p_value",
+                     "beta1_estimate", "beta1_se", "beta1_t", "beta1_p_value",
+                     "gamma0_estimate", "gamma0_se", "gamma0_t", "gamma0_p_value",
+                     "gamma1_estimate", "gamma1_se", "gamma1_t", "gamma1_p_value",
+                     "gamma2_estimate", "gamma2_se", "gamma2_t", "gamma2_p_value")
       predicted_ffls <- predicted_ffls[col_order] #order columns
     }
     if(ffl_type == "TF"){
       col_order <- c("tf_name", "mirna_name", "targetgene_name", "pFFL", "p_value_adj", "p_value",
                      "tf", "mirna", "targetgene", "TRANSMIR", "TARGETSCAN", "MIRTARBASE", "MIRDB",
-                     "MIRANDA", "TRRUST", "ENCODE")
+                     "MIRANDA", "TRRUST", "ENCODE",
+                     "alpha0_estimate", "alpha0_se", "alpha0_t", "alpha0_p_value",
+                     "alpha1_estimate", "alpha1_se", "alpha1_t", "alpha1_p_value",
+                     "beta0_estimate", "beta0_se", "beta0_t", "beta0_p_value",
+                     "beta1_estimate", "beta1_se", "beta1_t", "beta1_p_value",
+                     "gamma0_estimate", "gamma0_se", "gamma0_t", "gamma0_p_value",
+                     "gamma1_estimate", "gamma1_se", "gamma1_t", "gamma1_p_value",
+                     "gamma2_estimate", "gamma2_se", "gamma2_t", "gamma2_p_value")
       predicted_ffls <- predicted_ffls[col_order] #order columns
     }
   }
