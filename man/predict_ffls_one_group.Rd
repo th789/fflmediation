@@ -8,7 +8,7 @@ predict_ffls_one_group(mirna_expr, mrna_expr, ffl_type = c("miRNA",
   "TF"), candidate_ffls, first_row = 1,
   last_row = nrow(candidate_ffls), num_bootstrap_samples = 1000,
   num_permutations = 1000, p_value_adjust_method = c("holm",
-  "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"),
+  "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", "none"),
   seed = 12345)
 }
 \arguments{
@@ -20,20 +20,20 @@ predict_ffls_one_group(mirna_expr, mrna_expr, ffl_type = c("miRNA",
 
 \item{candidate_ffls}{candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})}
 
-\item{first_row}{first row of candidate FFL dataframe to include in analyses (integer: default = 1)}
+\item{first_row}{first row of candidate_ffls dataframe to include in analyses (integer: default = 1)}
 
-\item{last_row}{last row of candidate FFL dataframe to include in analyses (integer: default = nrow(candidate_ffls))}
+\item{last_row}{last row of candidate_ffls dataframe to include in analyses (integer: default = nrow(candidate_ffls))}
 
 \item{num_bootstrap_samples}{number of bootstrap samples (integer: default = 1000)}
 
 \item{num_permutations}{number of permutations (integer: default = 1000)}
 
-\item{p_value_adjust_method}{method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", or "none")}
+\item{p_value_adjust_method}{method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", or "none")}
 
 \item{seed}{random seed (integer: default = 12345)}
 }
 \value{
-candidate FFLs with pFFLs and p-values (dataframe: candidate FFLs x 16, see sample output)
+candidate FFLs with P(FFL) values, p-values, and coefficient estimates (dataframe: # candidate FFLs x 49 for miRNA-FFLs; # candidate FFLs x 50 for TF-FFLs; see sample output)
 }
 \description{
 function to predict FFLs in one biological group

@@ -12,6 +12,7 @@ globalVariables(c("i"))
 #' @import org.Hs.eg.db
 #' @import miRBaseConverter
 #' @import AnnotationDbi
+#' @import fdrtool
 
 #one-group function: predict ffls in one biological group
 
@@ -22,14 +23,14 @@ globalVariables(c("i"))
 #' @param mrna_expr mRNA expression data (dataframe: mRNAs x samples, see \code{sample_mrna_expr})
 #' @param ffl_type FFL type (character: "miRNA" or "TF")
 #' @param candidate_ffls candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})
-#' @param first_row first row of candidate FFL dataframe to include in analyses (integer: default = 1)
-#' @param last_row last row of candidate FFL dataframe to include in analyses (integer: default = nrow(candidate_ffls))
+#' @param first_row first row of candidate_ffls dataframe to include in analyses (integer: default = 1)
+#' @param last_row last row of candidate_ffls dataframe to include in analyses (integer: default = nrow(candidate_ffls))
 #' @param num_bootstrap_samples number of bootstrap samples (integer: default = 1000)
 #' @param num_permutations number of permutations (integer: default = 1000)
-#' @param p_value_adjust_method method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", or "none")
+#' @param p_value_adjust_method method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", or "none")
 #' @param seed random seed (integer: default = 12345)
 #'
-#' @return candidate FFLs with pFFLs and p-values (dataframe: candidate FFLs x 16, see sample output)
+#' @return candidate FFLs with P(FFL) values, p-values, and coefficient estimates (dataframe: # candidate FFLs x 49 for miRNA-FFLs; # candidate FFLs x 50 for TF-FFLs; see sample output)
 #' @export
 
 
