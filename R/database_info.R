@@ -1,33 +1,5 @@
 
 
-candidate_ffls_mirna_all <- rbind(candidate_ffls_mirna_all_part1, candidate_ffls_mirna_all_part2)
-###candidate miRNA-FFLs
-#' @title Transcription Factor (TF)-miRNA Interactions
-#' @description A DataFrame of TF-miRNA interactions
-#' compiled from databases (TransmiR v2.0).
-#' @format A DataFrame (117543 x 3) with the following columns:
-#' \describe{
-#' \item{tf}{TF involved in the interaction [Ensembl ID]}
-#' \item{mirna}{miRNA involved in the interaction (miRNA targeted by TF) [Accession Number]}
-#' \item{TRANSMIR}{indicator of whether interaction is in TransmiR v2.0 database}
-#' }
-"candidate_ffls_mirna_all"
-
-
-###candidate TF-FFLs
-#' @title Transcription Factor (TF)-miRNA Interactions
-#' @description A DataFrame of TF-miRNA interactions
-#' compiled from databases (TransmiR v2.0).
-#' @format A DataFrame (117543 x 3) with the following columns:
-#' \describe{
-#' \item{tf}{TF involved in the interaction [Ensembl ID]}
-#' \item{mirna}{miRNA involved in the interaction (miRNA targeted by TF) [Accession Number]}
-#' \item{TRANSMIR}{indicator of whether interaction is in TransmiR v2.0 database}
-#' }
-"candidate_ffls_tf_all"
-
-
-
 ###TF-miRNA interactions
 #' @title Transcription Factor (TF)-miRNA Interactions
 #' @description A DataFrame of TF-miRNA interactions

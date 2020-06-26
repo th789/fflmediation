@@ -98,7 +98,7 @@
 #sample output for predict_ffls_one_group for miRNA-FFLs
 #' @title sample_output_onegroup_mirna_ffls
 #' @description Sample output of \code{\link{predict_ffls_one_group}}
-#' @format A DataFrame (3 x 43) representing expression data of 5 mRNAs for 50 samples
+#' @format A DataFrame (3 x 49) representing expression data of 5 mRNAs for 50 samples
 #' \describe{
 #' \item{mirna_name}{miRNA in candidate FFL [miRNA name]}
 #' \item{tf_name}{TF in candidate FFL [SYMBOL]}
@@ -152,7 +152,7 @@
 #sample output for predict_ffls_two_groups for miRNA-FFLs
 #' @title sample_output_twogroups_mirna_ffls
 #' @description Sample output of \code{\link{predict_ffls_two_groups}}
-#' @format A DataFrame (3 x 73) representing expression data of 5 mRNAs for 50 samples
+#' @format A DataFrame (3 x 85) representing expression data of 5 mRNAs for 50 samples
 #' \describe{
 #' \item{mirna_name}{miRNA in candidate FFL [miRNA name]}
 #' \item{tf_name}{TF in candidate FFL [SYMBOL]}

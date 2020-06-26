@@ -21,8 +21,8 @@
 #                                                              first_row = 1, last_row = nrow(sample_candidate_ffls_mirna),
 #                                                              num_bootstrap_samples = 100, num_permutations = 100,
 #                                                              p_value_adjust_method = "fdr", seed = 12345)
-
-#save(sample_output_onegroup_mirna_ffls, file = "~/Dropbox/research/fflmediation/data/sample_output_onegroup_mirna_ffls.rda")
+#
+# save(sample_output_onegroup_mirna_ffls, file = "~/Dropbox/ddesktop/lab_parmigiani/fflmediation/data/sample_output_onegroup_mirna_ffls.rda")
 
 
 # two-group analysis ------------------------------------------------------
@@ -48,6 +48,6 @@
 #                                                               first_row = 1, last_row = nrow(sample_candidate_ffls_mirna),
 #                                                               num_bootstrap_samples = 100, num_permutations = 100,
 #                                                               p_value_adjust_method = "fdr", seed = 12345)
-
-#save(sample_output_twogroups_mirna_ffls, file = "~/Dropbox/research/fflmediation/data/sample_output_twogroups_mirna_ffls.rda")
+#
+#save(sample_output_twogroups_mirna_ffls, file = "~/Dropbox/ddesktop/lab_parmigiani/fflmediation/data/sample_output_twogroups_mirna_ffls.rda")
 
