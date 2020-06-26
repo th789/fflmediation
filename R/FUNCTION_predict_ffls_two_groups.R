@@ -12,106 +12,79 @@
 #' @param mrna_expr_g2 Group 2's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g2})
 #' @param ffl_type FFL type (character: "miRNA" or "TF")
 #' @param candidate_ffls candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})
-#' @param first_row first row of candidate FFL dataframe to include in analyses (integer: default = 1)
-#' @param last_row last row of candidate FFL dataframe to include in analyses (integer: default = nrow(candidate_ffls))
+#' @param first_row first row of candidate_ffls dataframe to include in analyses (integer: default = 1)
+#' @param last_row last row of candidate_ffls dataframe to include in analyses (integer: default = nrow(candidate_ffls))
 #' @param num_bootstrap_samples number of bootstrap samples (integer: default = 1000)
 #' @param num_permutations number of permutations (integer: default = 1000)
-#' @param p_value_adjust_method method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", or "none")
+#' @param p_value_adjust_method method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", or "none")
 #' @param seed random seed (integer: default = 12345)
 #'
-#' @return candidate FFLs with delta-pFFLs and p-values (dataframe: candidate FFLs x 18, see sample output)
+#' @return candidate FFLs with delta-P(FFL) values, p-values, and coefficient estimates (dataframe: number of candidate FFLs x 85 for miRNA-FFLs; number of candidate FFLs x 86 for TF-FFLs; see sample output)
 #' @export
 
 
-predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1,
-                                    mirna_expr_g2, mrna_expr_g2,
+predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1, mirna_expr_g2, mrna_expr_g2,
                                     ffl_type = c("miRNA", "TF"),
                                     candidate_ffls, first_row = 1, last_row = nrow(candidate_ffls),
                                     num_bootstrap_samples = 1000, num_permutations = 1000,
-                                    p_value_adjust_method = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"),
+                                    p_value_adjust_method = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", "none"),
                                     seed = 12345){
+  #check for errors
+  if(ncol(mirna_expr_g1) == 0) stop("mirna_expr_g1 is empty (0 rows)")
+  if(ncol(mrna_expr_g1) == 0) stop("mrna_expr_g1 is empty (0 rows)")
+  if(ncol(mirna_expr_g2) == 0) stop("mirna_expr_g2 is empty (0 rows)")
+  if(ncol(mrna_expr_g2) == 0) stop("mrna_expr_g2 is empty (0 rows)")
+  if(nrow(candidate_ffls) == 0) stop("candidate_ffls is empty (0 rows)")
+  if((first_row > nrow(candidate_ffls)) | (last_row > nrow(candidate_ffls))) stop("first_row and/or last_row larger than number of rows in candidate_ffls")
+  if(!ncol(mirna_expr_g1) == ncol(mrna_expr_g1)) stop("mirna_expr_g1 and mrna_expr_g1 do not have the same number of samples (rows)")
+  if(!ncol(mirna_expr_g2) == ncol(mrna_expr_g2)) stop("mirna_expr_g2 and mrna_expr_g2 do not have the same number of samples (rows)")
 
   #functions used in foreach
-  #####mediation function (mirna-ffls)
+  #mediation function (mirna-ffls)
   mediation_ffl <- function(mirna, tf, targetgene, ffl_type = c("miRNA", "TF")){
-    ###mirna-ffl
+    ###1. set variables
+    if(ffl_type == "miRNA"){X <- mirna; M <- tf; Y <- targetgene}
+    if(ffl_type == "TF"){X <- tf; M <- mirna; Y <- targetgene}
+
+    ###2. fit models; store coefficients
+    #model1: Y ~ X
+    model1 <- lm(Y ~ X)
+    alpha1 <- summary(model1)$coefficients["X", ]
+    #model2: M ~ X
+    model2 <- lm(M ~ X)
+    beta1 <- summary(model2)$coefficients["X", ]
+    #model3: Y ~ X + M
+    model3 <- lm(Y ~ X + M)
+    gamma1 <- summary(model3)$coefficients["X", ]
+    gamma2 <- summary(model3)$coefficients["M", ]
+
+    ###3. determine if candidate ffl meets mediation conditions
+    #mirna-ffl conditions
     if(ffl_type == "miRNA"){
-      #model1: M ~ X (tf ~ mirna)
-      model1 <- lm(tf ~ mirna)
-      alpha1 <- summary(model1)$coefficients["mirna", ]
       alpha1_crit <- alpha1["Estimate"] < 0
-      #model2: Y ~ X (targetgene ~ mirna)
-      model2 <- lm(targetgene ~ mirna)
-      beta1 <- summary(model2)$coefficients["mirna", ]
       beta1_crit <- beta1["Estimate"] < 0
-      #model3: Y ~ X + M (targetgene ~ mirna + tf)
-      model3 <- lm(targetgene ~ mirna + tf)
-      gamma1 <- summary(model3)$coefficients["mirna", ]
-      gamma2 <- summary(model3)$coefficients["tf", ]
-      gamma1_crit <- (gamma1["Estimate"] < 0) & (abs(gamma1["Estimate"]) < abs(beta1["Estimate"]))
+      gamma1_crit <- (gamma1["Estimate"] < 0) & (abs(gamma1["Estimate"]) < abs(alpha1["Estimate"]))
       gamma2_crit <- gamma2["Estimate"] > 0
     }
-
-    ###tf-ffls
+    #tf-ffl conditions
     if(ffl_type == "TF"){
-      #model1: M ~ X (mirna ~ tf)
-      model1 <- lm(mirna ~ tf)
-      alpha1 <- summary(model1)$coefficients["tf", ]
       alpha1_crit <- alpha1["Estimate"] > 0
-      #model2: Y ~ X (targetgene ~ tf)
-      model2 <- lm(targetgene ~ tf)
-      beta1 <- summary(model2)$coefficients["tf", ]
       beta1_crit <- beta1["Estimate"] > 0
-      #model3: Y ~ X + M (gene ~ tf + mirna)
-      model3 <- lm(targetgene ~ tf + mirna)
-      gamma1 <- summary(model3)$coefficients["tf", ]
-      gamma2 <- summary(model3)$coefficients["mirna", ]
-      gamma1_crit <- (gamma1["Estimate"] > 0) & (abs(gamma1["Estimate"]) > abs(beta1["Estimate"]))
+      gamma1_crit <- (gamma1["Estimate"] > 0) & (abs(gamma1["Estimate"]) > abs(alpha1["Estimate"]))
       gamma2_crit <- gamma2["Estimate"] < 0
     }
 
     #determine if candidate ffl meets mediation conditions
     meet_conditions <- alpha1_crit & beta1_crit & gamma1_crit & gamma2_crit
+
     return(meet_conditions)
   }
-  #####bootstrap function
+  #bootstrap function
   bootstrap_stat <- function(data, indices, ffl_type){
-    if(ffl_type == "miRNA"){
-      d <- data[indices, ] #allows boot to select sample
-      #model1: M ~ X (tf ~ mirna)
-      model1 <- lm(tf ~ mirna, data = d)
-      alpha1 <- summary(model1)$coefficients["mirna", ]
-      alpha1_crit <- alpha1["Estimate"] < 0
-      #model2: Y ~ X (targetgene ~ mirna)
-      model2 <- lm(targetgene ~ mirna, data = d)
-      beta1 <- summary(model2)$coefficients["mirna", ]
-      beta1_crit <- beta1["Estimate"] < 0
-      #model3: Y ~ X + M (targetgene ~ mirna + tf)
-      model3 <- lm(targetgene ~ mirna + tf, data = d)
-      gamma1 <- summary(model3)$coefficients["mirna", ]
-      gamma2 <- summary(model3)$coefficients["tf", ]
-      gamma1_crit <- (gamma1["Estimate"] < 0) & (abs(gamma1["Estimate"]) < abs(beta1["Estimate"]))
-      gamma2_crit <- gamma2["Estimate"] > 0
-    }
-    if(ffl_type == "TF"){
-      d <- data[indices, ] #allows boot to select sample
-      #model1: M ~ X (mirna ~ tf)
-      model1 <- lm(mirna ~ tf, data = d)
-      alpha1 <- summary(model1)$coefficients["tf", ]
-      alpha1_crit <- alpha1["Estimate"] > 0
-      #model2: Y ~ X (targetgene ~ tf)
-      model2 <- lm(targetgene ~ tf, data = d)
-      beta1 <- summary(model2)$coefficients["tf", ]
-      beta1_crit <- beta1["Estimate"] > 0
-      #model3: Y ~ X + M (targetgene ~ tf + mirna)
-      model3 <- lm(targetgene ~ tf + mirna, data = d)
-      gamma1 <- summary(model3)$coefficients["tf", ]
-      gamma2 <- summary(model3)$coefficients["mirna", ]
-      gamma1_crit <- (gamma1["Estimate"] > 0) & (abs(gamma1["Estimate"]) > abs(beta1["Estimate"]))
-      gamma2_crit <- gamma2["Estimate"] < 0
-    }
-    #determine if candidate ffl meets mediation model conditions
-    meet_conditions <- alpha1_crit & beta1_crit & gamma1_crit & gamma2_crit
+    #allows boot to select sample
+    d <- data[indices, ]
+    #determine if each bootstrap sample meets mediation analysis conditions
+    meet_conditions <- mediation_ffl(mirna=d$mirna, tf=d$tf, targetgene=d$targetgene, ffl_type=ffl_type)
     return(meet_conditions)
   }
 
@@ -120,8 +93,9 @@ predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1,
   cl <- makeCluster(num_cores, outfile = "")
   registerDoParallel(cl)
 
-  set.seed(seed)
-  predicted_ffls <- foreach(i = first_row:last_row, .combine = rbind) %dopar% {
+  #iterate through each candidate ffl
+  candidate_ffls <- candidate_ffls[first_row:last_row, ] #subset candidate ffls
+  predicted_ffls <- foreach(i = 1:nrow(candidate_ffls), .combine = rbind) %dopar% {
     ######step1. identify candidate ffl: extract mirna, tf, and targetgene expression levels
     row <- candidate_ffls[i, ] #row is the candidate ffl
     #group1
@@ -134,213 +108,143 @@ predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1,
     targetgene_g2 <- t(mrna_expr_g2[row[["targetgene"]], ])
 
     ######step2. calculate regression models, store coefficients
+    ###2a. set variables
     if(ffl_type == "miRNA"){
-      ###group1
-      #model1: M ~ X (tf ~ mirna)
-      model1 <- lm(tf_g1 ~ mirna_g1)
-      alpha0 <- summary(model1)$coefficients["(Intercept)", ]
-      alpha1 <- summary(model1)$coefficients["mirna_g1", ]
-      #model2: Y ~ X (targetgene ~ mirna)
-      model2 <- lm(targetgene_g1 ~ mirna_g1)
-      beta0 <- summary(model2)$coefficients["(Intercept)", ]
-      beta1 <- summary(model2)$coefficients["mirna_g1", ]
-      #model3: Y ~ X + M (targetgene ~ mirna + tf)
-      model3 <- lm(targetgene_g1 ~ mirna_g1 + tf_g1)
-      gamma0 <- summary(model3)$coefficients["(Intercept)", ]
-      gamma1 <- summary(model3)$coefficients["mirna_g1", ]
-      gamma2 <- summary(model3)$coefficients["tf_g1", ]
-      #store coefficients
-      #alpha0
-      row[["alpha0_g1_estimate"]] <- alpha0["Estimate"]
-      row[["alpha0_g1_se"]] <- alpha0["Std. Error"]
-      row[["alpha0_g1_t"]] <- alpha0["t value"]
-      row[["alpha0_g1_p_value"]] <- alpha0["Pr(>|t|)"]
-      #alpha1
-      row[["alpha1_g1_estimate"]] <- alpha1["Estimate"]
-      row[["alpha1_g1_se"]] <- alpha1["Std. Error"]
-      row[["alpha1_g1_t"]] <- alpha1["t value"]
-      row[["alpha1_g1_p_value"]] <- alpha1["Pr(>|t|)"]
-      #beta0
-      row[["beta0_g1_estimate"]] <- beta0["Estimate"]
-      row[["beta0_g1_se"]] <- beta0["Std. Error"]
-      row[["beta0_g1_t"]] <- beta0["t value"]
-      row[["beta0_g1_p_value"]] <- beta0["Pr(>|t|)"]
-      #beta1
-      row[["beta1_g1_estimate"]] <- beta1["Estimate"]
-      row[["beta1_g1_se"]] <- beta1["Std. Error"]
-      row[["beta1_g1_t"]] <- beta1["t value"]
-      row[["beta1_g1_p_value"]] <- beta1["Pr(>|t|)"]
-      #gamma0
-      row[["gamma0_g1_estimate"]] <- gamma0["Estimate"]
-      row[["gamma0_g1_se"]] <- gamma0["Std. Error"]
-      row[["gamma0_g1_t"]] <- gamma0["t value"]
-      row[["gamma0_g1_p_value"]] <- gamma0["Pr(>|t|)"]
-      #gamma1
-      row[["gamma1_g1_estimate"]] <- gamma1["Estimate"]
-      row[["gamma1_g1_se"]] <- gamma1["Std. Error"]
-      row[["gamma1_g1_t"]] <- gamma1["t value"]
-      row[["gamma1_g1_p_value"]] <- gamma1["Pr(>|t|)"]
-      #gamma2
-      row[["gamma2_g1_estimate"]] <- gamma2["Estimate"]
-      row[["gamma2_g1_se"]] <- gamma2["Std. Error"]
-      row[["gamma2_g1_t"]] <- gamma2["t value"]
-      row[["gamma2_g1_p_value"]] <- gamma2["Pr(>|t|)"]
-
-      ###group2
-      #model1: M ~ X (tf ~ mirna)
-      model1 <- lm(tf_g2 ~ mirna_g2)
-      alpha0 <- summary(model1)$coefficients["(Intercept)", ]
-      alpha1 <- summary(model1)$coefficients["mirna_g2", ]
-      #model2: Y ~ X (targetgene ~ mirna)
-      model2 <- lm(targetgene_g2 ~ mirna_g2)
-      beta0 <- summary(model2)$coefficients["(Intercept)", ]
-      beta1 <- summary(model2)$coefficients["mirna_g2", ]
-      #model3: Y ~ X + M (targetgene ~ mirna + tf)
-      model3 <- lm(targetgene_g2 ~ mirna_g2 + tf_g2)
-      gamma0 <- summary(model3)$coefficients["(Intercept)", ]
-      gamma1 <- summary(model3)$coefficients["mirna_g2", ]
-      gamma2 <- summary(model3)$coefficients["tf_g2", ]
-      #store coefficients
-      #alpha0
-      row[["alpha0_g2_estimate"]] <- alpha0["Estimate"]
-      row[["alpha0_g2_se"]] <- alpha0["Std. Error"]
-      row[["alpha0_g2_t"]] <- alpha0["t value"]
-      row[["alpha0_g2_p_value"]] <- alpha0["Pr(>|t|)"]
-      #alpha1
-      row[["alpha1_g2_estimate"]] <- alpha1["Estimate"]
-      row[["alpha1_g2_se"]] <- alpha1["Std. Error"]
-      row[["alpha1_g2_t"]] <- alpha1["t value"]
-      row[["alpha1_g2_p_value"]] <- alpha1["Pr(>|t|)"]
-      #beta0
-      row[["beta0_g2_estimate"]] <- beta0["Estimate"]
-      row[["beta0_g2_se"]] <- beta0["Std. Error"]
-      row[["beta0_g2_t"]] <- beta0["t value"]
-      row[["beta0_g2_p_value"]] <- beta0["Pr(>|t|)"]
-      #beta1
-      row[["beta1_g2_estimate"]] <- beta1["Estimate"]
-      row[["beta1_g2_se"]] <- beta1["Std. Error"]
-      row[["beta1_g2_t"]] <- beta1["t value"]
-      row[["beta1_g2_p_value"]] <- beta1["Pr(>|t|)"]
-      #gamma0
-      row[["gamma0_g2_estimate"]] <- gamma0["Estimate"]
-      row[["gamma0_g2_se"]] <- gamma0["Std. Error"]
-      row[["gamma0_g2_t"]] <- gamma0["t value"]
-      row[["gamma0_g2_p_value"]] <- gamma0["Pr(>|t|)"]
-      #gamma1
-      row[["gamma1_g2_estimate"]] <- gamma1["Estimate"]
-      row[["gamma1_g2_se"]] <- gamma1["Std. Error"]
-      row[["gamma1_g2_t"]] <- gamma1["t value"]
-      row[["gamma1_g2_p_value"]] <- gamma1["Pr(>|t|)"]
-      #gamma2
-      row[["gamma2_g2_estimate"]] <- gamma2["Estimate"]
-      row[["gamma2_g2_se"]] <- gamma2["Std. Error"]
-      row[["gamma2_g2_t"]] <- gamma2["t value"]
-      row[["gamma2_g2_p_value"]] <- gamma2["Pr(>|t|)"]
+      X_g1 <- mirna_g1
+      M_g1 <- tf_g1
+      Y_g1 <- targetgene_g1
+      X_g2 <- mirna_g2
+      M_g2 <- tf_g2
+      Y_g2 <- targetgene_g2
     }
-    ###tf-ffls
     if(ffl_type == "TF"){
-      ###group1
-      #model1: M ~ X (mirna ~ tf)
-      model1 <- lm(mirna_g1 ~ tf_g1)
-      alpha0 <- summary(model1)$coefficients["(Intercept)", ]
-      alpha1 <- summary(model1)$coefficients["tf_g1", ]
-      #model2: Y ~ X (targetgene ~ tf)
-      model2 <- lm(targetgene_g1 ~ tf_g1)
-      beta0 <- summary(model2)$coefficients["(Intercept)", ]
-      beta1 <- summary(model2)$coefficients["tf_g1", ]
-      #model3: Y ~ X + M (gene ~ tf + mirna)
-      model3 <- lm(targetgene_g1 ~ tf_g1 + mirna_g1)
-      gamma0 <- summary(model3)$coefficients["(Intercept)", ]
-      gamma1 <- summary(model3)$coefficients["tf_g1", ]
-      gamma2 <- summary(model3)$coefficients["mirna_g1", ]
-      #store coefficients
-      #alpha0
-      row[["alpha0_g1_estimate"]] <- alpha0["Estimate"]
-      row[["alpha0_g1_se"]] <- alpha0["Std. Error"]
-      row[["alpha0_g1_t"]] <- alpha0["t value"]
-      row[["alpha0_g1_p_value"]] <- alpha0["Pr(>|t|)"]
-      #alpha1
-      row[["alpha1_g1_estimate"]] <- alpha1["Estimate"]
-      row[["alpha1_g1_se"]] <- alpha1["Std. Error"]
-      row[["alpha1_g1_t"]] <- alpha1["t value"]
-      row[["alpha1_g1_p_value"]] <- alpha1["Pr(>|t|)"]
-      #beta0
-      row[["beta0_g1_estimate"]] <- beta0["Estimate"]
-      row[["beta0_g1_se"]] <- beta0["Std. Error"]
-      row[["beta0_g1_t"]] <- beta0["t value"]
-      row[["beta0_g1_p_value"]] <- beta0["Pr(>|t|)"]
-      #beta1
-      row[["beta1_g1_estimate"]] <- beta1["Estimate"]
-      row[["beta1_g1_se"]] <- beta1["Std. Error"]
-      row[["beta1_g1_t"]] <- beta1["t value"]
-      row[["beta1_g1_p_value"]] <- beta1["Pr(>|t|)"]
-      #gamma0
-      row[["gamma0_g1_estimate"]] <- gamma0["Estimate"]
-      row[["gamma0_g1_se"]] <- gamma0["Std. Error"]
-      row[["gamma0_g1_t"]] <- gamma0["t value"]
-      row[["gamma0_g1_p_value"]] <- gamma0["Pr(>|t|)"]
-      #gamma1
-      row[["gamma1_g1_estimate"]] <- gamma1["Estimate"]
-      row[["gamma1_g1_se"]] <- gamma1["Std. Error"]
-      row[["gamma1_g1_t"]] <- gamma1["t value"]
-      row[["gamma1_g1_p_value"]] <- gamma1["Pr(>|t|)"]
-      #gamma2
-      row[["gamma2_g1_estimate"]] <- gamma2["Estimate"]
-      row[["gamma2_g1_se"]] <- gamma2["Std. Error"]
-      row[["gamma2_g1_t"]] <- gamma2["t value"]
-      row[["gamma2_g1_p_value"]] <- gamma2["Pr(>|t|)"]
-
-      ###group2
-      #model1: M ~ X (mirna ~ tf)
-      model1 <- lm(mirna_g2 ~ tf_g2)
-      alpha0 <- summary(model1)$coefficients["(Intercept)", ]
-      alpha1 <- summary(model1)$coefficients["tf_g2", ]
-      #model2: Y ~ X (targetgene ~ tf)
-      model2 <- lm(targetgene_g2 ~ tf_g2)
-      beta0 <- summary(model2)$coefficients["(Intercept)", ]
-      beta1 <- summary(model2)$coefficients["tf_g2", ]
-      #model3: Y ~ X + M (gene ~ tf + mirna)
-      model3 <- lm(targetgene_g2 ~ tf_g2 + mirna_g2)
-      gamma0 <- summary(model3)$coefficients["(Intercept)", ]
-      gamma1 <- summary(model3)$coefficients["tf_g2", ]
-      gamma2 <- summary(model3)$coefficients["mirna_g2", ]
-      #store coefficients
-      #alpha0
-      row[["alpha0_g2_estimate"]] <- alpha0["Estimate"]
-      row[["alpha0_g2_se"]] <- alpha0["Std. Error"]
-      row[["alpha0_g2_t"]] <- alpha0["t value"]
-      row[["alpha0_g2_p_value"]] <- alpha0["Pr(>|t|)"]
-      #alpha1
-      row[["alpha1_g2_estimate"]] <- alpha1["Estimate"]
-      row[["alpha1_g2_se"]] <- alpha1["Std. Error"]
-      row[["alpha1_g2_t"]] <- alpha1["t value"]
-      row[["alpha1_g2_p_value"]] <- alpha1["Pr(>|t|)"]
-      #beta0
-      row[["beta0_g2_estimate"]] <- beta0["Estimate"]
-      row[["beta0_g2_se"]] <- beta0["Std. Error"]
-      row[["beta0_g2_t"]] <- beta0["t value"]
-      row[["beta0_g2_p_value"]] <- beta0["Pr(>|t|)"]
-      #beta1
-      row[["beta1_g2_estimate"]] <- beta1["Estimate"]
-      row[["beta1_g2_se"]] <- beta1["Std. Error"]
-      row[["beta1_g2_t"]] <- beta1["t value"]
-      row[["beta1_g2_p_value"]] <- beta1["Pr(>|t|)"]
-      #gamma0
-      row[["gamma0_g2_estimate"]] <- gamma0["Estimate"]
-      row[["gamma0_g2_se"]] <- gamma0["Std. Error"]
-      row[["gamma0_g2_t"]] <- gamma0["t value"]
-      row[["gamma0_g2_p_value"]] <- gamma0["Pr(>|t|)"]
-      #gamma1
-      row[["gamma1_g2_estimate"]] <- gamma1["Estimate"]
-      row[["gamma1_g2_se"]] <- gamma1["Std. Error"]
-      row[["gamma1_g2_t"]] <- gamma1["t value"]
-      row[["gamma1_g2_p_value"]] <- gamma1["Pr(>|t|)"]
-      #gamma2
-      row[["gamma2_g2_estimate"]] <- gamma2["Estimate"]
-      row[["gamma2_g2_se"]] <- gamma2["Std. Error"]
-      row[["gamma2_g2_t"]] <- gamma2["t value"]
-      row[["gamma2_g2_p_value"]] <- gamma2["Pr(>|t|)"]
+      X_g1 <- tf_g1
+      M_g1 <- mirna_g1
+      Y_g1 <- targetgene_g1
+      X_g2 <- tf_g2
+      M_g2 <- mirna_g2
+      Y_g2 <- targetgene_g2
     }
+
+    ###2b. fit models --- group1
+    #model1: Y ~ X (targetgene ~ mirna)
+    model1 <- lm(Y_g1 ~ X_g1)
+    alpha0 <- summary(model1)$coefficients["(Intercept)", ]
+    alpha1 <- summary(model1)$coefficients["X_g1", ]
+    #model2: M ~ X (tf ~ mirna)
+    model2 <- lm(M_g1 ~ X_g1)
+    beta0 <- summary(model2)$coefficients["(Intercept)", ]
+    beta1 <- summary(model2)$coefficients["X_g1", ]
+    #model3: Y ~ X + M (targetgene ~ mirna + tf)
+    model3 <- lm(Y_g1 ~ X_g1 + M_g1)
+    gamma0 <- summary(model3)$coefficients["(Intercept)", ]
+    gamma1 <- summary(model3)$coefficients["X_g1", ]
+    gamma2 <- summary(model3)$coefficients["M_g1", ]
+    ###2c. store information --- group1
+    #coefficients
+    #alpha0
+    row[["alpha0_g1_estimate"]] <- alpha0["Estimate"]
+    row[["alpha0_g1_se"]] <- alpha0["Std. Error"]
+    row[["alpha0_g1_t"]] <- alpha0["t value"]
+    row[["alpha0_g1_p_value"]] <- alpha0["Pr(>|t|)"]
+    #alpha1
+    row[["alpha1_g1_estimate"]] <- alpha1["Estimate"]
+    row[["alpha1_g1_se"]] <- alpha1["Std. Error"]
+    row[["alpha1_g1_t"]] <- alpha1["t value"]
+    row[["alpha1_g1_p_value"]] <- alpha1["Pr(>|t|)"]
+    #beta0
+    row[["beta0_g1_estimate"]] <- beta0["Estimate"]
+    row[["beta0_g1_se"]] <- beta0["Std. Error"]
+    row[["beta0_g1_t"]] <- beta0["t value"]
+    row[["beta0_g1_p_value"]] <- beta0["Pr(>|t|)"]
+    #beta1
+    row[["beta1_g1_estimate"]] <- beta1["Estimate"]
+    row[["beta1_g1_se"]] <- beta1["Std. Error"]
+    row[["beta1_g1_t"]] <- beta1["t value"]
+    row[["beta1_g1_p_value"]] <- beta1["Pr(>|t|)"]
+    #gamma0
+    row[["gamma0_g1_estimate"]] <- gamma0["Estimate"]
+    row[["gamma0_g1_se"]] <- gamma0["Std. Error"]
+    row[["gamma0_g1_t"]] <- gamma0["t value"]
+    row[["gamma0_g1_p_value"]] <- gamma0["Pr(>|t|)"]
+    #gamma1
+    row[["gamma1_g1_estimate"]] <- gamma1["Estimate"]
+    row[["gamma1_g1_se"]] <- gamma1["Std. Error"]
+    row[["gamma1_g1_t"]] <- gamma1["t value"]
+    row[["gamma1_g1_p_value"]] <- gamma1["Pr(>|t|)"]
+    #gamma2
+    row[["gamma2_g1_estimate"]] <- gamma2["Estimate"]
+    row[["gamma2_g1_se"]] <- gamma2["Std. Error"]
+    row[["gamma2_g1_t"]] <- gamma2["t value"]
+    row[["gamma2_g1_p_value"]] <- gamma2["Pr(>|t|)"]
+    #means
+    row[["meanX_g1"]] <- mean(X_g1)
+    row[["meanM_g1"]] <- mean(M_g1)
+    #variances
+    row[["varX_g1"]] <- var(X_g1)*(nrow(X_g1)-1)/nrow(X_g1)
+    row[["varM_g1"]] <- var(M_g1)*(nrow(M_g1)-1)/nrow(M_g1)
+    row[["covXM_g1"]] <- cov(X_g1, M_g1)*(nrow(X_g1)-1)/nrow(X_g1)
+    row[["var_epsilon_g1"]] <- summary(model3)$sigma^2
+
+    ###2b. fit models --- group2
+    #model1: Y ~ X (targetgene ~ mirna)
+    model1 <- lm(Y_g2 ~ X_g2)
+    alpha0 <- summary(model1)$coefficients["(Intercept)", ]
+    alpha1 <- summary(model1)$coefficients["X_g2", ]
+    #model2: M ~ X (tf ~ mirna)
+    model2 <- lm(M_g2 ~ X_g2)
+    beta0 <- summary(model2)$coefficients["(Intercept)", ]
+    beta1 <- summary(model2)$coefficients["X_g2", ]
+    #model3: Y ~ X + M (targetgene ~ mirna + tf)
+    model3 <- lm(Y_g2 ~ X_g2 + M_g2)
+    gamma0 <- summary(model3)$coefficients["(Intercept)", ]
+    gamma1 <- summary(model3)$coefficients["X_g2", ]
+    gamma2 <- summary(model3)$coefficients["M_g2", ]
+    ###2c. store information --- group2
+    #coefficients
+    #alpha0
+    row[["alpha0_g2_estimate"]] <- alpha0["Estimate"]
+    row[["alpha0_g2_se"]] <- alpha0["Std. Error"]
+    row[["alpha0_g2_t"]] <- alpha0["t value"]
+    row[["alpha0_g2_p_value"]] <- alpha0["Pr(>|t|)"]
+    #alpha1
+    row[["alpha1_g2_estimate"]] <- alpha1["Estimate"]
+    row[["alpha1_g2_se"]] <- alpha1["Std. Error"]
+    row[["alpha1_g2_t"]] <- alpha1["t value"]
+    row[["alpha1_g2_p_value"]] <- alpha1["Pr(>|t|)"]
+    #beta0
+    row[["beta0_g2_estimate"]] <- beta0["Estimate"]
+    row[["beta0_g2_se"]] <- beta0["Std. Error"]
+    row[["beta0_g2_t"]] <- beta0["t value"]
+    row[["beta0_g2_p_value"]] <- beta0["Pr(>|t|)"]
+    #beta1
+    row[["beta1_g2_estimate"]] <- beta1["Estimate"]
+    row[["beta1_g2_se"]] <- beta1["Std. Error"]
+    row[["beta1_g2_t"]] <- beta1["t value"]
+    row[["beta1_g2_p_value"]] <- beta1["Pr(>|t|)"]
+    #gamma0
+    row[["gamma0_g2_estimate"]] <- gamma0["Estimate"]
+    row[["gamma0_g2_se"]] <- gamma0["Std. Error"]
+    row[["gamma0_g2_t"]] <- gamma0["t value"]
+    row[["gamma0_g2_p_value"]] <- gamma0["Pr(>|t|)"]
+    #gamma1
+    row[["gamma1_g2_estimate"]] <- gamma1["Estimate"]
+    row[["gamma1_g2_se"]] <- gamma1["Std. Error"]
+    row[["gamma1_g2_t"]] <- gamma1["t value"]
+    row[["gamma1_g2_p_value"]] <- gamma1["Pr(>|t|)"]
+    #gamma2
+    row[["gamma2_g2_estimate"]] <- gamma2["Estimate"]
+    row[["gamma2_g2_se"]] <- gamma2["Std. Error"]
+    row[["gamma2_g2_t"]] <- gamma2["t value"]
+    row[["gamma2_g2_p_value"]] <- gamma2["Pr(>|t|)"]
+    #means
+    row[["meanX_g2"]] <- mean(X_g2)
+    row[["meanM_g2"]] <- mean(M_g2)
+    #variances
+    row[["varX_g2"]] <- var(X_g2)*(nrow(X_g2)-1)/nrow(X_g2)
+    row[["varM_g2"]] <- var(M_g2)*(nrow(M_g2)-1)/nrow(M_g2)
+    row[["covXM_g2"]] <- cov(X_g2, M_g2)*(nrow(X_g2)-1)/nrow(X_g2)
+    row[["var_epsilon_g2"]] <- summary(model3)$sigma^2
 
     #####step3. calculate delta-p(FFL)
     #create expression df (expr_data)
@@ -348,115 +252,112 @@ predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1,
     colnames(expr_data_g1) <- c("mirna", "tf", "targetgene")
     expr_data_g2 <- data.frame(mirna_g2, tf_g2, targetgene_g2) #group2
     colnames(expr_data_g2) <- c("mirna", "tf", "targetgene")
-
     #bootstrap to calculate delta-p(FFL)
+    set.seed(seed)
     boostrap_results_g1 <- boot::boot(data = expr_data_g1, statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore")
     boostrap_results_g2 <- boot::boot(data = expr_data_g2, statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore")
-    obs_delta_pffl <- mean(boostrap_results_g1[["t"]]) - mean(boostrap_results_g2[["t"]])
+    obs_delta_pffl <- mean(boostrap_results_g1[["t"]]) - mean(boostrap_results_g2[["t"]]) #calculate delta-p(FFL)
+    row[["delta_pFFL_(group1-group2)"]] <- obs_delta_pffl
     row[["pFFL_group1"]] <- mean(boostrap_results_g1[["t"]])
     row[["pFFL_group2"]] <- mean(boostrap_results_g2[["t"]])
-    row[["delta_pFFL_(group1-group2)"]] <- obs_delta_pffl
 
     #####step4. calculate p-value
-    #create empty vectors to store results
-    perm_mirna_vector <- rep(NA, ceiling(num_permutations/4))
-    perm_tf_vector <- rep(NA, ceiling(num_permutations/4))
-    perm_targetgene_vector <- rep(NA, ceiling(num_permutations/4))
-    perm_all_vector <- rep(NA, ceiling(num_permutations/4))
-
+    #create empty vector to store results
+    null_delta_pffls <- rep(NA, num_permutations)
     #conduct permutations
-    for(perm in 1:ceiling(num_permutations/4)){
-      ###a. permute data -- shuffle 1) mirna; 2) tf; 3) targetgene; 4) mirna and tf
-      perm_mirna <- list(data.frame(mirna = sample(expr_data_g1$mirna), tf = expr_data_g1$tf, targetgene = expr_data_g1$targetgene),
-                         data.frame(mirna = sample(expr_data_g2$mirna), tf = expr_data_g2$tf, targetgene = expr_data_g2$targetgene))
-      perm_tf <- list(data.frame(mirna = expr_data_g1$mirna, tf = sample(expr_data_g1$tf), targetgene = expr_data_g1$targetgene),
-                      data.frame(mirna = expr_data_g2$mirna, tf = sample(expr_data_g2$tf), targetgene = expr_data_g2$targetgene))
-      perm_targetgene <- list(data.frame(mirna = expr_data_g1$mirna, tf = expr_data_g1$tf, targetgene = sample(expr_data_g1$targetgene)),
-                              data.frame(mirna = expr_data_g2$mirna, tf = expr_data_g2$tf, targetgene = sample(expr_data_g2$targetgene)))
-      perm_all <- list(data.frame(mirna = sample(expr_data_g1$mirna), tf = sample(expr_data_g1$tf), targetgene = expr_data_g1$targetgene),
-                       data.frame(mirna = sample(expr_data_g2$mirna), tf = sample(expr_data_g2$tf), targetgene = expr_data_g2$targetgene))
-
-      ###b. calculate delta-p(FFL) of permuted data -- through bootstrapping
-      boostrap_perm_mirna <- list(boot::boot(data = perm_mirna[[1]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"),
-                                  boot::boot(data = perm_mirna[[2]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"))
-      boostrap_perm_tf <- list(boot::boot(data = perm_tf[[1]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"),
-                               boot::boot(data = perm_tf[[2]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"))
-      boostrap_perm_targetgene <- list(boot::boot(data = perm_targetgene[[1]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"),
-                                       boot::boot(data = perm_targetgene[[2]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"))
-      boostrap_perm_all <- list(boot::boot(data = perm_all[[1]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"),
-                                boot::boot(data = perm_all[[2]], statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore"))
-      #store results
-      perm_mirna_vector[perm] <- mean(boostrap_perm_mirna[[1]][["t"]]) - mean(boostrap_perm_mirna[[2]][["t"]])
-      perm_tf_vector[perm] <- mean(boostrap_perm_tf[[1]][["t"]]) - mean(boostrap_perm_tf[[2]][["t"]])
-      perm_targetgene_vector[perm] <- mean(boostrap_perm_targetgene[[1]][["t"]]) - mean(boostrap_perm_targetgene[[2]][["t"]])
-      perm_all_vector[perm] <- mean(boostrap_perm_all[[1]][["t"]]) - mean(boostrap_perm_all[[2]][["t"]])
+    set.seed(seed)
+    for(perm in 1:num_permutations){
+      ###a. permute data --- shuffle group assignment
+      expr_data_combined <- rbind(expr_data_g1, expr_data_g2)
+      row_nums_perm_g1 <- sample(nrow(expr_data_combined), nrow(expr_data_g1)) #sample rows to be in group 1
+      all_rows <- seq(1, nrow(expr_data_combined))
+      row_nums_perm_g2 <- all_rows[!(all_rows %in% row_nums_perm_g1)] #remaining rows that are not sampled are in group 2
+      expr_data_perm_g1 <- expr_data_combined[row_nums_perm_g1, ]
+      expr_data_perm_g2 <- expr_data_combined[row_nums_perm_g2, ]
+      ###b. calculate delta-p(FFL) of permuted data
+      #bootstrap
+      boostrap_results_perm_g1 <- boot::boot(data = expr_data_perm_g1, statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore")
+      boostrap_results_perm_g2 <- boot::boot(data = expr_data_perm_g2, statistic = bootstrap_stat, R = num_bootstrap_samples, ffl_type = ffl_type, parallel = "multicore")
+      #calculate null delta-p(FFL) values
+      null_delta_pffls[perm] <- mean(boostrap_results_perm_g1[["t"]]) - mean(boostrap_results_perm_g2[["t"]])
     }
 
-    #calculate p-value/percentile of observed p(FFL) among null p(FFL)s (2-sided permutation p-value)
-    null_delta_pffls <- c(perm_mirna_vector, perm_tf_vector, perm_targetgene_vector, perm_all_vector)
-    p_val <- mean(abs(null_delta_pffls) >= abs(obs_delta_pffl))
+    #calculate p-value/percentile of observed delta-p(FFL) among null delta-p(FFL)s
+    p_val <- mean(abs(null_delta_pffls) >= abs(obs_delta_pffl)) #two-sided test since delta-p(FFL) exists in [-1, 1]
     row[["p_value"]] <- p_val
 
-    #print results
-    if(p_val < 0.05){print(paste0("*****candidate FFL ", i, " / ", last_row, " ----- ", "delta-p(FFL) = ", obs_delta_pffl, "; p-value = ",  p_val, sep = ""))}
-    else{print(paste0("candidate FFL ", i, " / ", last_row, " ----- ", "delta-p(FFL) = ", obs_delta_pffl, "; p-value = ",  p_val, sep = ""))}
+    #print progress
+    if(p_val < 0.05){print(paste0("*****candidate FFL ", i, " / ", nrow(candidate_ffls), " ----- ", "delta-p(FFL) = ", obs_delta_pffl, "; p-value = ",  p_val, sep = ""))}
+    else{print(paste0("candidate FFL ", i, " / ", nrow(candidate_ffls), " ----- ", "delta-p(FFL) = ", obs_delta_pffl, "; p-value = ",  p_val, sep = ""))}
 
     return(row)
-
   }
+
   #end parallelization
   stopCluster(cl)
 
+  #assemble results
   #add mirna, tf, targetgene names
-  if(dim(predicted_ffls)[1] > 0){
-    predicted_ffls$targetgene_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$targetgene, column = c("SYMBOL"), keytype = "ENSEMBL")
-    predicted_ffls$tf_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$tf, column = c("SYMBOL"), keytype = "ENSEMBL")
-    predicted_ffls$mirna_name <- miRNA_AccessionToName(predicted_ffls$mirna, targetVersion = "v22")$TargetName
+  predicted_ffls$targetgene_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$targetgene, column = c("SYMBOL"), keytype = "ENSEMBL")
+  predicted_ffls$tf_name <- mapIds(org.Hs.eg.db, keys = predicted_ffls$tf, column = c("SYMBOL"), keytype = "ENSEMBL")
+  predicted_ffls$mirna_name <- miRNA_AccessionToName(predicted_ffls$mirna, targetVersion = "v22")$TargetName
+  #adjust for multiple testing
+  if(!p_value_adjust_method == "locfdr"){
     predicted_ffls$p_value_adj <- p.adjust(predicted_ffls$p_value, method = p_value_adjust_method)
-    predicted_ffls[order(predicted_ffls$p_value_adj), ] #order rows based on adjusted p-value
-    #order columns
-    if(ffl_type == "miRNA"){
-      col_order <- c("mirna_name", "tf_name", "targetgene_name", "pFFL_group1", "pFFL_group2", "delta_pFFL_(group1-group2)", "p_value_adj", "p_value",
-                     "mirna", "tf", "targetgene", "TARGETSCAN", "MIRTARBASE", "MIRDB",
-                     "MIRANDA", "TRRUST", "ENCODE",
-                     "alpha0_g1_estimate", "alpha0_g1_se", "alpha0_g1_t", "alpha0_g1_p_value",
-                     "alpha1_g1_estimate", "alpha1_g1_se", "alpha1_g1_t", "alpha1_g1_p_value",
-                     "beta0_g1_estimate", "beta0_g1_se", "beta0_g1_t", "beta0_g1_p_value",
-                     "beta1_g1_estimate", "beta1_g1_se", "beta1_g1_t", "beta1_g1_p_value",
-                     "gamma0_g1_estimate", "gamma0_g1_se", "gamma0_g1_t", "gamma0_g1_p_value",
-                     "gamma1_g1_estimate", "gamma1_g1_se", "gamma1_g1_t", "gamma1_g1_p_value",
-                     "gamma2_g1_estimate", "gamma2_g1_se", "gamma2_g1_t", "gamma2_g1_p_value",
-                     "alpha0_g2_estimate", "alpha0_g2_se", "alpha0_g2_t", "alpha0_g2_p_value",
-                     "alpha1_g2_estimate", "alpha1_g2_se", "alpha1_g2_t", "alpha1_g2_p_value",
-                     "beta0_g2_estimate", "beta0_g2_se", "beta0_g2_t", "beta0_g2_p_value",
-                     "beta1_g2_estimate", "beta1_g2_se", "beta1_g2_t", "beta1_g2_p_value",
-                     "gamma0_g2_estimate", "gamma0_g2_se", "gamma0_g2_t", "gamma0_g2_p_value",
-                     "gamma1_g2_estimate", "gamma1_g2_se", "gamma1_g2_t", "gamma1_g2_p_value",
-                     "gamma2_g2_estimate", "gamma2_g2_se", "gamma2_g2_t", "gamma2_g2_p_value")
-      predicted_ffls <- predicted_ffls[col_order] #order columns
-    }
-    if(ffl_type == "TF"){
-      col_order <- c("tf_name", "mirna_name", "targetgene_name", "pFFL_group1", "pFFL_group2", "delta_pFFL_(group1-group2)", "p_value_adj", "p_value",
-                     "tf", "mirna", "targetgene", "TRANSMIR", "TARGETSCAN", "MIRTARBASE", "MIRDB",
-                     "MIRANDA", "TRRUST", "ENCODE",
-                     "alpha0_g1_estimate", "alpha0_g1_se", "alpha0_g1_t", "alpha0_g1_p_value",
-                     "alpha1_g1_estimate", "alpha1_g1_se", "alpha1_g1_t", "alpha1_g1_p_value",
-                     "beta0_g1_estimate", "beta0_g1_se", "beta0_g1_t", "beta0_g1_p_value",
-                     "beta1_g1_estimate", "beta1_g1_se", "beta1_g1_t", "beta1_g1_p_value",
-                     "gamma0_g1_estimate", "gamma0_g1_se", "gamma0_g1_t", "gamma0_g1_p_value",
-                     "gamma1_g1_estimate", "gamma1_g1_se", "gamma1_g1_t", "gamma1_g1_p_value",
-                     "gamma2_g1_estimate", "gamma2_g1_se", "gamma2_g1_t", "gamma2_g1_p_value",
-                     "alpha0_g2_estimate", "alpha0_g2_se", "alpha0_g2_t", "alpha0_g2_p_value",
-                     "alpha1_g2_estimate", "alpha1_g2_se", "alpha1_g2_t", "alpha1_g2_p_value",
-                     "beta0_g2_estimate", "beta0_g2_se", "beta0_g2_t", "beta0_g2_p_value",
-                     "beta1_g2_estimate", "beta1_g2_se", "beta1_g2_t", "beta1_g2_p_value",
-                     "gamma0_g2_estimate", "gamma0_g2_se", "gamma0_g2_t", "gamma0_g2_p_value",
-                     "gamma1_g2_estimate", "gamma1_g2_se", "gamma1_g2_t", "gamma1_g2_p_value",
-                     "gamma2_g2_estimate", "gamma2_g2_se", "gamma2_g2_t", "gamma2_g2_p_value")
-      predicted_ffls <- predicted_ffls[col_order] #order columns
-    }
   }
-  #return prediction
+  if(p_value_adjust_method == "locfdr"){
+    results_vec <- fdrtool(predicted_ffls$p_value, statistic = "pvalue", plot = FALSE, color.figure = FALSE, verbose = FALSE)
+    predicted_ffls$p_value_adj <- results_vec["lfdr"][[1]]
+  }
+  #order rows based on adjusted p-value
+  predicted_ffls[order(predicted_ffls$p_value_adj), ]
+  #order columns
+  if(ffl_type == "miRNA"){
+    col_order <- c("mirna_name", "tf_name", "targetgene_name", "pFFL_group1", "pFFL_group2", "delta_pFFL_(group1-group2)", "p_value_adj", "p_value",
+                   "mirna", "tf", "targetgene", "TARGETSCAN", "MIRTARBASE", "MIRDB",
+                   "MIRANDA", "TRRUST", "ENCODE",
+                   "alpha0_g1_estimate", "alpha0_g1_se", "alpha0_g1_t", "alpha0_g1_p_value",
+                   "alpha1_g1_estimate", "alpha1_g1_se", "alpha1_g1_t", "alpha1_g1_p_value",
+                   "beta0_g1_estimate", "beta0_g1_se", "beta0_g1_t", "beta0_g1_p_value",
+                   "beta1_g1_estimate", "beta1_g1_se", "beta1_g1_t", "beta1_g1_p_value",
+                   "gamma0_g1_estimate", "gamma0_g1_se", "gamma0_g1_t", "gamma0_g1_p_value",
+                   "gamma1_g1_estimate", "gamma1_g1_se", "gamma1_g1_t", "gamma1_g1_p_value",
+                   "gamma2_g1_estimate", "gamma2_g1_se", "gamma2_g1_t", "gamma2_g1_p_value",
+                   "meanX_g1", "meanM_g1", "varX_g1", "varM_g1", "covXM_g1", "var_epsilon_g1",
+                   "alpha0_g2_estimate", "alpha0_g2_se", "alpha0_g2_t", "alpha0_g2_p_value",
+                   "alpha1_g2_estimate", "alpha1_g2_se", "alpha1_g2_t", "alpha1_g2_p_value",
+                   "beta0_g2_estimate", "beta0_g2_se", "beta0_g2_t", "beta0_g2_p_value",
+                   "beta1_g2_estimate", "beta1_g2_se", "beta1_g2_t", "beta1_g2_p_value",
+                   "gamma0_g2_estimate", "gamma0_g2_se", "gamma0_g2_t", "gamma0_g2_p_value",
+                   "gamma1_g2_estimate", "gamma1_g2_se", "gamma1_g2_t", "gamma1_g2_p_value",
+                   "gamma2_g2_estimate", "gamma2_g2_se", "gamma2_g2_t", "gamma2_g2_p_value",
+                   "meanX_g2", "meanM_g2", "varX_g2", "varM_g2", "covXM_g2", "var_epsilon_g2")
+    predicted_ffls <- predicted_ffls[col_order]
+  }
+  if(ffl_type == "TF"){
+    col_order <- c("tf_name", "mirna_name", "targetgene_name", "pFFL_group1", "pFFL_group2", "delta_pFFL_(group1-group2)", "p_value_adj", "p_value",
+                   "tf", "mirna", "targetgene", "TRANSMIR", "TARGETSCAN", "MIRTARBASE", "MIRDB",
+                   "MIRANDA", "TRRUST", "ENCODE",
+                   "alpha0_g1_estimate", "alpha0_g1_se", "alpha0_g1_t", "alpha0_g1_p_value",
+                   "alpha1_g1_estimate", "alpha1_g1_se", "alpha1_g1_t", "alpha1_g1_p_value",
+                   "beta0_g1_estimate", "beta0_g1_se", "beta0_g1_t", "beta0_g1_p_value",
+                   "beta1_g1_estimate", "beta1_g1_se", "beta1_g1_t", "beta1_g1_p_value",
+                   "gamma0_g1_estimate", "gamma0_g1_se", "gamma0_g1_t", "gamma0_g1_p_value",
+                   "gamma1_g1_estimate", "gamma1_g1_se", "gamma1_g1_t", "gamma1_g1_p_value",
+                   "gamma2_g1_estimate", "gamma2_g1_se", "gamma2_g1_t", "gamma2_g1_p_value",
+                   "meanX_g1", "meanM_g1", "varX_g1", "varM_g1", "covXM_g1", "var_epsilon_g1",
+                   "alpha0_g2_estimate", "alpha0_g2_se", "alpha0_g2_t", "alpha0_g2_p_value",
+                   "alpha1_g2_estimate", "alpha1_g2_se", "alpha1_g2_t", "alpha1_g2_p_value",
+                   "beta0_g2_estimate", "beta0_g2_se", "beta0_g2_t", "beta0_g2_p_value",
+                   "beta1_g2_estimate", "beta1_g2_se", "beta1_g2_t", "beta1_g2_p_value",
+                   "gamma0_g2_estimate", "gamma0_g2_se", "gamma0_g2_t", "gamma0_g2_p_value",
+                   "gamma1_g2_estimate", "gamma1_g2_se", "gamma1_g2_t", "gamma1_g2_p_value",
+                   "gamma2_g2_estimate", "gamma2_g2_se", "gamma2_g2_t", "gamma2_g2_p_value",
+                   "meanX_g2", "meanM_g2", "varX_g2", "varM_g2", "covXM_g2", "var_epsilon_g2")
+    predicted_ffls <- predicted_ffls[col_order]
+  }
+
+  #return predictions
   return(predicted_ffls)
 }
 

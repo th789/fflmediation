@@ -9,7 +9,7 @@ predict_ffls_two_groups(mirna_expr_g1, mrna_expr_g1, mirna_expr_g2,
   first_row = 1, last_row = nrow(candidate_ffls),
   num_bootstrap_samples = 1000, num_permutations = 1000,
   p_value_adjust_method = c("holm", "hochberg", "hommel", "bonferroni",
-  "BH", "BY", "fdr", "none"), seed = 12345)
+  "BH", "BY", "fdr", "locfdr", "none"), seed = 12345)
 }
 \arguments{
 \item{mirna_expr_g1}{Group 1's miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr_g1})}
@@ -24,20 +24,20 @@ predict_ffls_two_groups(mirna_expr_g1, mrna_expr_g1, mirna_expr_g2,
 
 \item{candidate_ffls}{candidate FFLs (dataframe: candidate FFLs x 10, see \code{sample_candidate_ffls_mirna})}
 
-\item{first_row}{first row of candidate FFL dataframe to include in analyses (integer: default = 1)}
+\item{first_row}{first row of candidate_ffls dataframe to include in analyses (integer: default = 1)}
 
-\item{last_row}{last row of candidate FFL dataframe to include in analyses (integer: default = nrow(candidate_ffls))}
+\item{last_row}{last row of candidate_ffls dataframe to include in analyses (integer: default = nrow(candidate_ffls))}
 
 \item{num_bootstrap_samples}{number of bootstrap samples (integer: default = 1000)}
 
 \item{num_permutations}{number of permutations (integer: default = 1000)}
 
-\item{p_value_adjust_method}{method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", or "none")}
+\item{p_value_adjust_method}{method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", or "none")}
 
 \item{seed}{random seed (integer: default = 12345)}
 }
 \value{
-candidate FFLs with delta-pFFLs and p-values (dataframe: candidate FFLs x 18, see sample output)
+candidate FFLs with delta-P(FFL) values, p-values, and coefficient estimates (dataframe: number of candidate FFLs x 85 for miRNA-FFLs; number of candidate FFLs x 86 for TF-FFLs; see sample output)
 }
 \description{
 function to predict FFLs unique to one of two biological groups
