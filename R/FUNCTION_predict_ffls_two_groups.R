@@ -18,6 +18,7 @@
 #' @param num_permutations number of permutations (integer: default = 1000)
 #' @param p_value_adjust_method method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", or "none")
 #' @param seed random seed (integer: default = 12345)
+#' @param parallel whether to run analyses in parallel (boolean: default = TRUE)
 #'
 #' @return candidate FFLs with delta-P(FFL) values, p-values, and coefficient estimates (dataframe: number of candidate FFLs x 85 for miRNA-FFLs; number of candidate FFLs x 86 for TF-FFLs; see sample output)
 #' @export
@@ -28,7 +29,7 @@ predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1, mirna_expr_g2, 
                                     candidate_ffls, first_row = 1, last_row = nrow(candidate_ffls),
                                     num_bootstrap_samples = 1000, num_permutations = 1000,
                                     p_value_adjust_method = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", "none"),
-                                    seed = 12345){
+                                    seed = 12345, parallel = TRUE){
   #check for errors
   if(ncol(mirna_expr_g1) == 0) stop("mirna_expr_g1 is empty (0 rows)")
   if(ncol(mrna_expr_g1) == 0) stop("mrna_expr_g1 is empty (0 rows)")
@@ -89,7 +90,8 @@ predict_ffls_two_groups <- function(mirna_expr_g1, mrna_expr_g1, mirna_expr_g2, 
   }
 
   #start parallelization
-  num_cores <- detectCores()
+  if(parallel){num_cores <- detectCores()-1}
+  else{num_cores <- 1}
   cl <- makeCluster(num_cores, outfile = "")
   registerDoParallel(cl)
 

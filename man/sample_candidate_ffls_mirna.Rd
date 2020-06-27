@@ -4,7 +4,8 @@
 \name{sample_candidate_ffls_mirna}
 \alias{sample_candidate_ffls_mirna}
 \title{sample_candidate_ffls_mirna}
-\format{A DataFrame (3 x 9) with the following columns:
+\format{
+A DataFrame (3 x 9) with the following columns:
 \describe{
 \item{mirna}{miRNA in candidate FFL [Accession Number]}
 \item{tf}{TF in candidate FFL [Ensembl ID]}
@@ -15,7 +16,8 @@
 \item{MIRANDA}{indicator of whether miRNA-target gene or miRNA-TF interaction is in miRanda v3.0 database}
 \item{TRRUST}{indicator of whether TF-target gene or miRNA-TF interaction is in TRRUST v2.0 database}
 \item{ENCODE}{indicator of whether TF-target gene or miRNA-TF interaction is in ENCODE database}
-}}
+}
+}
 \usage{
 sample_candidate_ffls_mirna
 }

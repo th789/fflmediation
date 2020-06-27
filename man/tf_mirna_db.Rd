@@ -4,12 +4,14 @@
 \name{tf_mirna_db}
 \alias{tf_mirna_db}
 \title{Transcription Factor (TF)-miRNA Interactions}
-\format{A DataFrame (117543 x 3) with the following columns:
+\format{
+A DataFrame (117543 x 3) with the following columns:
 \describe{
 \item{tf}{TF involved in the interaction [Ensembl ID]}
 \item{mirna}{miRNA involved in the interaction (miRNA targeted by TF) [Accession Number]}
 \item{TRANSMIR}{indicator of whether interaction is in TransmiR v2.0 database}
-}}
+}
+}
 \usage{
 tf_mirna_db
 }

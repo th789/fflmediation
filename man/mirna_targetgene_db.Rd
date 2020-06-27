@@ -4,7 +4,8 @@
 \name{mirna_targetgene_db}
 \alias{mirna_targetgene_db}
 \title{miRNA-Target Gene Interactions}
-\format{A DataFrame (2477728 x 6) with the following columns:
+\format{
+A DataFrame (2477728 x 6) with the following columns:
 \describe{
 \item{mirna}{miRNA involved in the interaction [Accession Number]}
 \item{targetgene}{target gene involved in the interaction (gene targeted by miRNA), target genes include transcription factors [Ensembl ID]}
@@ -12,7 +13,8 @@
 \item{MIRTARBASE}{indicator of whether interaction is in miRTarBase v7.0 database}
 \item{MIRDB}{indicator of whether interaction is in miRDB v6.0 database}
 \item{MIRANDA}{indicator of whether interaction is in miRanda v3.0 database}
-}}
+}
+}
 \usage{
 mirna_targetgene_db
 }

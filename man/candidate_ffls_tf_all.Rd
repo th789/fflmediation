@@ -4,7 +4,8 @@
 \name{candidate_ffls_tf_all}
 \alias{candidate_ffls_tf_all}
 \title{candidate_ffls_tf_all}
-\format{A DataFrame (178,872 x 10) with the following columns:
+\format{
+A DataFrame (178,872 x 10) with the following columns:
 \describe{
 \item{tf}{TF in candidate FFL [Ensembl ID]}
 \item{mirna}{miRNA in candidate FFL [Accession Number]}
@@ -16,7 +17,8 @@
 \item{MIRANDA}{indicator of whether miRNA-target gene or miRNA-TF interaction is in miRanda v3.0 database}
 \item{TRRUST}{indicator of whether TF-target gene or miRNA-TF interaction is in TRRUST v2.0 database}
 \item{ENCODE}{indicator of whether TF-target gene or miRNA-TF interaction is in ENCODE database}
-}}
+}
+}
 \usage{
 candidate_ffls_tf_all
 }

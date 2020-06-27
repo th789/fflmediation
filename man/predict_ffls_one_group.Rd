@@ -4,12 +4,20 @@
 \alias{predict_ffls_one_group}
 \title{predict_ffls_one_group}
 \usage{
-predict_ffls_one_group(mirna_expr, mrna_expr, ffl_type = c("miRNA",
-  "TF"), candidate_ffls, first_row = 1,
-  last_row = nrow(candidate_ffls), num_bootstrap_samples = 1000,
-  num_permutations = 1000, p_value_adjust_method = c("holm",
-  "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", "none"),
-  seed = 12345)
+predict_ffls_one_group(
+  mirna_expr,
+  mrna_expr,
+  ffl_type = c("miRNA", "TF"),
+  candidate_ffls,
+  first_row = 1,
+  last_row = nrow(candidate_ffls),
+  num_bootstrap_samples = 1000,
+  num_permutations = 1000,
+  p_value_adjust_method = c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY",
+    "fdr", "locfdr", "none"),
+  seed = 12345,
+  parallel = TRUE
+)
 }
 \arguments{
 \item{mirna_expr}{miRNA expression data (dataframe: miRNAs x samples, see \code{sample_mirna_expr})}
@@ -31,6 +39,8 @@ predict_ffls_one_group(mirna_expr, mrna_expr, ffl_type = c("miRNA",
 \item{p_value_adjust_method}{method to adjust p-values for multiple testing (character: "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "locfdr", or "none")}
 
 \item{seed}{random seed (integer: default = 12345)}
+
+\item{parallel}{whether to run analyses in parallel (boolean: default = TRUE)}
 }
 \value{
 candidate FFLs with P(FFL) values, p-values, and coefficient estimates (dataframe: # candidate FFLs x 49 for miRNA-FFLs; # candidate FFLs x 50 for TF-FFLs; see sample output)

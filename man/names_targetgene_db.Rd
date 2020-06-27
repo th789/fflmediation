@@ -4,7 +4,9 @@
 \name{names_targetgene_db}
 \alias{names_targetgene_db}
 \title{Target Genes}
-\format{Vector of target genes (22183 target genes)}
+\format{
+Vector of target genes (22183 target genes)
+}
 \usage{
 names_targetgene_db
 }

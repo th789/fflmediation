@@ -4,7 +4,9 @@
 \name{names_mirna_db}
 \alias{names_mirna_db}
 \title{miRNAs}
-\format{Vector of miRNAs (4543 miRNAs)}
+\format{
+Vector of miRNAs (4543 miRNAs)
+}
 \usage{
 names_mirna_db
 }

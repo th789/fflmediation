@@ -4,7 +4,9 @@
 \name{names_tf_db}
 \alias{names_tf_db}
 \title{Transcription Factors}
-\format{Vector of transcription factors (1149 transcription factors)}
+\format{
+Vector of transcription factors (1149 transcription factors)
+}
 \usage{
 names_tf_db
 }

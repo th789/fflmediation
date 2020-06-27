@@ -4,7 +4,9 @@
 \name{sample_mrna_expr_g2}
 \alias{sample_mrna_expr_g2}
 \title{sample_mrna_expr_g2}
-\format{A DataFrame (5 x 50) representing expression data of 5 mRNAs for 50 samples in Group 2}
+\format{
+A DataFrame (5 x 50) representing expression data of 5 mRNAs for 50 samples in Group 2
+}
 \usage{
 sample_mrna_expr_g2
 }

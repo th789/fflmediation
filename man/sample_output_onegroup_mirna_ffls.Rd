@@ -4,7 +4,8 @@
 \name{sample_output_onegroup_mirna_ffls}
 \alias{sample_output_onegroup_mirna_ffls}
 \title{sample_output_onegroup_mirna_ffls}
-\format{A DataFrame (3 x 49) representing expression data of 5 mRNAs for 50 samples
+\format{
+A DataFrame (3 x 49) representing expression data of 5 mRNAs for 50 samples
 \describe{
 \item{mirna_name}{miRNA in candidate FFL [miRNA name]}
 \item{tf_name}{TF in candidate FFL [SYMBOL]}
@@ -22,7 +23,8 @@
 \item{TRRUST}{indicator of whether TF-target gene or miRNA-TF interaction is in TRRUST v2.0 database}
 \item{ENCODE}{indicator of whether TF-target gene or miRNA-TF interaction is in ENCODE database}
 \item{remaining columns}{estimate, standard error (se), t-statistic (t), and p-value of regression coefficients}
-}}
+}
+}
 \usage{
 sample_output_onegroup_mirna_ffls
 }

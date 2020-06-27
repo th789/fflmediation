@@ -4,7 +4,9 @@
 \name{sample_mirna_expr}
 \alias{sample_mirna_expr}
 \title{sample_mirna_expr}
-\format{A DataFrame (3 x 50) representing expression data of 3 miRNAs for 50 samples}
+\format{
+A DataFrame (3 x 50) representing expression data of 3 miRNAs for 50 samples
+}
 \usage{
 sample_mirna_expr
 }
