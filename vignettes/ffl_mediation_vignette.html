@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Tessa Han" />
+
+
+<title>fflmediation: Identifying Feed Forward Loops Using Mediation Analysis</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">fflmediation: Identifying Feed Forward Loops Using Mediation Analysis</h1>
+<h4 class="author">Tessa Han</h4>
+<h4 class="date">06-27-2020</h4>
+
+
+
+<p>In <em>Mediation Analysis to Identify Feed Forward Loop from Transcriptome Data</em> (2020), we introduce a new methodology that applies mediation analysis to predict feed forward loops (FFLs) in one biological group (the one-group method) or to predict FFLs unique to one of two biological groups (the two-group method). The <em>fflmediation</em> package contains functions for the one-group and two-group methods.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(fflmediation)</code></pre></div>
+<div id="one-group-method" class="section level2">
+<h2>One-group method</h2>
+<p>The one-group method predicts FFLs in one biological group.</p>
+<div id="format-data" class="section level5">
+<h5>1. Format data</h5>
+<p>The one-group method requires paired miRNA and mRNA expression data for <em>n</em> samples in a single biological group in the following format:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#sample miRNA expression data: miRNAs x samples (in this example: 3 x 50)</span>
+sample_mirna_expr
+                   V1        V2       V3       V4         V5        V6
+MI0000064    <span class="fl">1.794920</span> <span class="op">-</span><span class="fl">0.309676</span> <span class="fl">2.059152</span> <span class="fl">2.013765</span> <span class="op">-</span><span class="fl">0.8256095</span> <span class="op">-</span><span class="fl">0.511209</span>
+MI0000433    <span class="fl">3.380672</span>  <span class="fl">5.548398</span> <span class="fl">5.195282</span> <span class="fl">4.193502</span>  <span class="fl">4.8913758</span>  <span class="fl">4.749053</span>
+MIMAT0000062 <span class="fl">3.563854</span>  <span class="fl">4.370740</span> <span class="fl">5.243522</span> <span class="fl">6.058362</span>  <span class="fl">5.8313488</span>  <span class="fl">5.105212</span>
+                   V7        V8        V9      V10      V11       V12
+MI0000064    <span class="fl">1.130522</span> <span class="op">-</span><span class="fl">2.437250</span> <span class="op">-</span><span class="fl">2.775810</span> <span class="fl">3.519273</span> <span class="fl">2.349484</span> <span class="op">-</span><span class="fl">1.914083</span>
+MI0000433    <span class="fl">6.699347</span>  <span class="fl">4.655701</span>  <span class="fl">5.067772</span> <span class="fl">4.349430</span> <span class="fl">4.512361</span>  <span class="fl">5.303151</span>
+MIMAT0000062 <span class="fl">3.258287</span>  <span class="fl">5.645247</span>  <span class="fl">5.097104</span> <span class="fl">4.923266</span> <span class="fl">5.991951</span>  <span class="fl">4.140749</span>
+                   V13       V14      V15      V16      V17       V18
+MI0000064    <span class="op">-</span><span class="fl">5.193571</span> <span class="op">-</span><span class="fl">1.571687</span> <span class="fl">1.947935</span> <span class="fl">2.392836</span> <span class="fl">6.348986</span> <span class="fl">0.7649807</span>
+MI0000433     <span class="fl">4.758026</span>  <span class="fl">4.518266</span> <span class="fl">4.008197</span> <span class="fl">4.719351</span> <span class="fl">5.633017</span> <span class="fl">3.7601817</span>
+MIMAT0000062  <span class="fl">4.718420</span>  <span class="fl">7.066247</span> <span class="fl">4.388447</span> <span class="fl">5.315613</span> <span class="fl">5.660293</span> <span class="fl">3.2777976</span>
+                    V19      V20      V21       V22      V23       V24
+MI0000064    <span class="op">-</span><span class="fl">0.8930935</span> <span class="fl">5.586277</span> <span class="fl">3.755791</span> <span class="op">-</span><span class="fl">3.425916</span> <span class="fl">2.585652</span> <span class="op">-</span><span class="fl">4.512084</span>
+MI0000433     <span class="fl">6.7643141</span> <span class="fl">4.976320</span> <span class="fl">5.199920</span>  <span class="fl">6.347193</span> <span class="fl">5.036073</span>  <span class="fl">5.824581</span>
+MIMAT0000062  <span class="fl">2.8653740</span> <span class="fl">5.068946</span> <span class="fl">5.867822</span>  <span class="fl">2.709956</span> <span class="fl">4.849810</span>  <span class="fl">4.731218</span>
+                  V25       V26       V27       V28      V29      V30
+MI0000064    <span class="fl">1.946968</span> <span class="op">-</span><span class="fl">1.862343</span> <span class="fl">0.1416042</span> <span class="op">-</span><span class="fl">2.143132</span> <span class="fl">2.119845</span> <span class="fl">6.966770</span>
+MI0000433    <span class="fl">3.297328</span>  <span class="fl">5.480950</span> <span class="fl">7.4835501</span>  <span class="fl">5.401365</span> <span class="fl">5.215177</span> <span class="fl">3.184288</span>
+MIMAT0000062 <span class="fl">6.791332</span>  <span class="fl">5.672268</span> <span class="fl">4.7906989</span>  <span class="fl">5.012183</span> <span class="fl">6.534117</span> <span class="fl">5.077292</span>
+                   V31      V32       V33      V34      V35      V36
+MI0000064    <span class="fl">0.5790731</span> <span class="fl">1.623414</span> <span class="op">-</span><span class="fl">1.710388</span> <span class="fl">2.681649</span> <span class="fl">1.736391</span> <span class="fl">0.234707</span>
+MI0000433    <span class="fl">4.0882606</span> <span class="fl">4.950955</span>  <span class="fl">4.594613</span> <span class="fl">6.130382</span> <span class="fl">5.815465</span> <span class="fl">5.076418</span>
+MIMAT0000062 <span class="fl">5.0784375</span> <span class="fl">4.220739</span>  <span class="fl">5.166560</span> <span class="fl">5.265325</span> <span class="fl">5.890781</span> <span class="fl">4.532112</span>
+                   V37      V38      V39      V40      V41       V42
+MI0000064    <span class="op">-</span><span class="fl">3.501608</span> <span class="fl">4.359814</span> <span class="fl">2.676219</span> <span class="fl">1.424795</span> <span class="fl">1.957749</span> <span class="op">-</span><span class="fl">1.158093</span>
+MI0000433     <span class="fl">6.453747</span> <span class="fl">5.374121</span> <span class="fl">4.829096</span> <span class="fl">4.497787</span> <span class="fl">5.543522</span>  <span class="fl">4.494814</span>
+MIMAT0000062  <span class="fl">5.758375</span> <span class="fl">4.358264</span> <span class="fl">5.627672</span> <span class="fl">5.248330</span> <span class="fl">4.299924</span>  <span class="fl">4.432598</span>
+                  V43      V44      V45       V46      V47       V48
+MI0000064    <span class="fl">2.922656</span> <span class="fl">2.148874</span> <span class="fl">1.630874</span> <span class="op">-</span><span class="fl">2.979549</span> <span class="fl">5.996170</span> <span class="op">-</span><span class="fl">3.154419</span>
+MI0000433    <span class="fl">5.786796</span> <span class="fl">5.300949</span> <span class="fl">6.310224</span>  <span class="fl">5.798434</span> <span class="fl">5.850860</span>  <span class="fl">4.556432</span>
+MIMAT0000062 <span class="fl">4.738606</span> <span class="fl">3.936115</span> <span class="fl">4.893631</span>  <span class="fl">5.771104</span> <span class="fl">7.747404</span>  <span class="fl">4.916065</span>
+                   V49       V50
+MI0000064    <span class="op">-</span><span class="fl">1.767224</span> <span class="op">-</span><span class="fl">1.841207</span>
+MI0000433     <span class="fl">4.553225</span>  <span class="fl">5.013305</span>
+MIMAT0000062  <span class="fl">5.543568</span>  <span class="fl">5.752861</span>
+
+<span class="co">#sample mRNA expression data: mRNAs x samples (in this example 5 x 50)</span>
+sample_mrna_expr
+                      V1        V2        V3         V4         V5
+ENSG00000136997 <span class="fl">2.196522</span> <span class="op">-</span><span class="fl">1.424992</span> <span class="op">-</span><span class="fl">5.794998</span> <span class="op">-</span><span class="fl">0.9229269</span> <span class="op">-</span><span class="fl">2.8837704</span>
+ENSG00000002330 <span class="fl">2.109717</span> <span class="op">-</span><span class="fl">3.771615</span> <span class="op">-</span><span class="fl">5.518346</span> <span class="op">-</span><span class="fl">6.1259354</span> <span class="op">-</span><span class="fl">0.6120132</span>
+ENSG00000171552 <span class="fl">1.191326</span>  <span class="fl">3.001120</span>  <span class="fl">2.456053</span>  <span class="fl">0.5657497</span>  <span class="fl">1.7346952</span>
+ENSG00000120738 <span class="fl">3.522282</span>  <span class="fl">3.009794</span>  <span class="fl">2.559474</span>  <span class="fl">4.1994895</span>  <span class="fl">2.8825315</span>
+ENSG00000139687 <span class="fl">3.292940</span>  <span class="fl">2.913292</span>  <span class="fl">1.533641</span>  <span class="fl">1.9168206</span>  <span class="fl">4.0577374</span>
+                      V6        V7        V8         V9        V10
+ENSG00000136997 <span class="fl">5.754241</span> <span class="fl">1.6152445</span>  <span class="fl">2.641810</span> <span class="op">-</span><span class="fl">0.9781178</span>  <span class="fl">0.8557240</span>
+ENSG00000002330 <span class="fl">5.570317</span> <span class="fl">0.4993375</span> <span class="fl">10.999910</span>  <span class="fl">1.3808868</span> <span class="op">-</span><span class="fl">0.6480668</span>
+ENSG00000171552 <span class="fl">2.641769</span> <span class="fl">1.5849790</span>  <span class="fl">1.540424</span>  <span class="fl">1.2075060</span>  <span class="fl">0.8414609</span>
+ENSG00000120738 <span class="fl">3.038210</span> <span class="fl">4.1948056</span>  <span class="fl">3.343958</span>  <span class="fl">2.6709270</span>  <span class="fl">4.6708579</span>
+ENSG00000139687 <span class="fl">2.639679</span> <span class="fl">3.3505938</span>  <span class="fl">3.028258</span>  <span class="fl">3.4730483</span>  <span class="fl">2.0808453</span>
+                       V11       V12       V13      V14        V15
+ENSG00000136997  <span class="fl">4.5405031</span> <span class="op">-</span><span class="fl">4.858961</span>  <span class="fl">5.832784</span> <span class="fl">1.999289</span> <span class="op">-</span><span class="fl">0.5615196</span>
+ENSG00000002330 <span class="op">-</span><span class="fl">0.6991272</span> <span class="op">-</span><span class="fl">6.131919</span> <span class="fl">16.014753</span> <span class="fl">8.742753</span> <span class="op">-</span><span class="fl">1.7648203</span>
+ENSG00000171552  <span class="fl">2.7108900</span>  <span class="fl">3.267602</span>  <span class="fl">1.856849</span> <span class="fl">1.484971</span>  <span class="fl">3.4828912</span>
+ENSG00000120738  <span class="fl">2.0819418</span>  <span class="fl">2.912193</span>  <span class="fl">4.320294</span> <span class="fl">4.730786</span>  <span class="fl">5.1625961</span>
+ENSG00000139687  <span class="fl">2.6241766</span>  <span class="fl">1.187166</span>  <span class="fl">3.288600</span> <span class="fl">2.810377</span>  <span class="fl">3.0178602</span>
+                     V16        V17      V18        V19         V20
+ENSG00000136997 <span class="fl">6.880621</span>  <span class="fl">4.9985785</span> <span class="fl">1.532680</span> <span class="op">-</span><span class="fl">5.2285913</span> <span class="op">-</span><span class="fl">0.05823079</span>
+ENSG00000002330 <span class="fl">3.890550</span> <span class="op">-</span><span class="fl">0.5153313</span> <span class="fl">3.756331</span>  <span class="fl">3.5582751</span> <span class="op">-</span><span class="fl">4.86275929</span>
+ENSG00000171552 <span class="fl">1.837411</span>  <span class="fl">2.0417092</span> <span class="fl">2.483040</span>  <span class="fl">0.8198728</span>  <span class="fl">1.33642626</span>
+ENSG00000120738 <span class="fl">2.684268</span>  <span class="fl">2.4249039</span> <span class="fl">1.593644</span>  <span class="fl">5.2678599</span>  <span class="fl">2.22914607</span>
+ENSG00000139687 <span class="fl">3.650430</span>  <span class="fl">3.3102550</span> <span class="fl">4.668357</span>  <span class="fl">3.6726145</span>  <span class="fl">2.72248201</span>
+                      V21       V22      V23        V24        V25
+ENSG00000136997 <span class="op">-</span><span class="fl">7.614244</span>  <span class="fl">3.046419</span> <span class="fl">4.550216</span>  <span class="fl">1.9054757</span> <span class="op">-</span><span class="fl">4.1772878</span>
+ENSG00000002330 <span class="op">-</span><span class="fl">5.484747</span> <span class="fl">11.651134</span> <span class="fl">3.983297</span> <span class="fl">12.2588652</span> <span class="op">-</span><span class="fl">6.4563330</span>
+ENSG00000171552  <span class="fl">1.365350</span>  <span class="fl">1.298037</span> <span class="fl">2.576850</span> <span class="op">-</span><span class="fl">0.1130804</span>  <span class="fl">2.2609097</span>
+ENSG00000120738  <span class="fl">3.380316</span>  <span class="fl">3.605137</span> <span class="fl">4.019674</span>  <span class="fl">3.4749430</span>  <span class="fl">0.8140536</span>
+ENSG00000139687  <span class="fl">2.853974</span>  <span class="fl">4.701432</span> <span class="fl">3.471358</span>  <span class="fl">3.5817001</span>  <span class="fl">3.6660207</span>
+                     V26       V27       V28       V29        V30
+ENSG00000136997 <span class="fl">6.199953</span>  <span class="fl">1.107470</span> <span class="fl">0.9317538</span>  <span class="fl">2.549596</span>  <span class="op">-</span><span class="fl">7.589003</span>
+ENSG00000002330 <span class="fl">5.397783</span> <span class="op">-</span><span class="fl">3.869701</span> <span class="fl">7.7346693</span> <span class="op">-</span><span class="fl">5.285503</span> <span class="op">-</span><span class="fl">17.337957</span>
+ENSG00000171552 <span class="fl">3.147127</span>  <span class="fl">2.014794</span> <span class="fl">1.6882608</span>  <span class="fl">1.043804</span>   <span class="fl">2.473414</span>
+ENSG00000120738 <span class="fl">3.933192</span>  <span class="fl">3.475435</span> <span class="fl">3.3902816</span>  <span class="fl">2.272672</span>   <span class="fl">3.986556</span>
+ENSG00000139687 <span class="fl">2.221098</span>  <span class="fl">4.163325</span> <span class="fl">1.0354558</span>  <span class="fl">3.769171</span>   <span class="fl">5.259772</span>
+                       V31      V32       V33        V34       V35
+ENSG00000136997 <span class="op">-</span><span class="fl">4.2559596</span> <span class="fl">4.982575</span> <span class="op">-</span><span class="fl">5.746262</span>  <span class="fl">4.9672415</span> <span class="op">-</span><span class="fl">4.136866</span>
+ENSG00000002330  <span class="fl">1.3580344</span> <span class="fl">7.153524</span> <span class="op">-</span><span class="fl">1.376071</span> <span class="op">-</span><span class="fl">0.4606288</span>  <span class="fl">3.525083</span>
+ENSG00000171552  <span class="fl">0.4861359</span> <span class="fl">2.164281</span>  <span class="fl">1.129135</span>  <span class="fl">3.5933290</span>  <span class="fl">2.646598</span>
+ENSG00000120738  <span class="fl">4.4239836</span> <span class="fl">3.484731</span>  <span class="fl">3.349236</span>  <span class="fl">3.8601242</span>  <span class="fl">3.404611</span>
+ENSG00000139687  <span class="fl">2.5227277</span> <span class="fl">2.897419</span>  <span class="fl">3.368696</span>  <span class="fl">2.4645670</span>  <span class="fl">3.506602</span>
+                      V36      V37      V38       V39      V40       V41
+ENSG00000136997 <span class="op">-</span><span class="fl">2.484822</span> <span class="fl">7.450406</span> <span class="fl">2.868905</span> <span class="op">-</span><span class="fl">2.630856</span> <span class="fl">3.190830</span>  <span class="fl">3.246640</span>
+ENSG00000002330 <span class="op">-</span><span class="fl">5.033323</span> <span class="fl">8.754563</span> <span class="fl">1.624407</span> <span class="op">-</span><span class="fl">3.898580</span> <span class="fl">1.429729</span> <span class="op">-</span><span class="fl">1.316941</span>
+ENSG00000171552  <span class="fl">2.357370</span> <span class="fl">2.102393</span> <span class="fl">1.324733</span>  <span class="fl">2.972085</span> <span class="fl">2.755870</span>  <span class="fl">1.571714</span>
+ENSG00000120738  <span class="fl">3.367045</span> <span class="fl">1.480801</span> <span class="fl">4.549803</span>  <span class="fl">3.499881</span> <span class="fl">3.460873</span>  <span class="fl">5.076710</span>
+ENSG00000139687  <span class="fl">2.849443</span> <span class="fl">3.904244</span> <span class="fl">5.242036</span>  <span class="fl">1.804877</span> <span class="fl">2.581477</span>  <span class="fl">3.798251</span>
+                     V42      V43       V44      V45       V46         V47
+ENSG00000136997 <span class="fl">7.854933</span> <span class="fl">5.825634</span> <span class="op">-</span><span class="fl">1.026676</span> <span class="fl">2.565223</span> <span class="op">-</span><span class="fl">2.626936</span>  <span class="op">-</span><span class="fl">1.3878771</span>
+ENSG00000002330 <span class="fl">5.921938</span> <span class="fl">2.022376</span> <span class="op">-</span><span class="fl">6.921540</span> <span class="fl">1.984489</span>  <span class="fl">3.060780</span> <span class="op">-</span><span class="fl">11.2770136</span>
+ENSG00000171552 <span class="fl">1.286075</span> <span class="fl">1.809616</span>  <span class="fl">2.399865</span> <span class="fl">1.022155</span>  <span class="fl">2.183737</span>  <span class="op">-</span><span class="fl">0.1503105</span>
+ENSG00000120738 <span class="fl">2.692349</span> <span class="fl">3.952371</span>  <span class="fl">3.532788</span> <span class="fl">2.904452</span>  <span class="fl">2.857937</span>   <span class="fl">1.8169743</span>
+ENSG00000139687 <span class="fl">3.498172</span> <span class="fl">3.119560</span>  <span class="fl">2.632797</span> <span class="fl">3.262331</span>  <span class="fl">3.262704</span>   <span class="fl">3.6407389</span>
+                     V48        V49       V50
+ENSG00000136997 <span class="fl">2.250405</span>  <span class="fl">6.8611149</span> <span class="op">-</span><span class="fl">2.148230</span>
+ENSG00000002330 <span class="fl">9.091663</span> <span class="fl">12.4617818</span>  <span class="fl">1.131557</span>
+ENSG00000171552 <span class="fl">1.377033</span>  <span class="fl">1.2345607</span>  <span class="fl">2.464309</span>
+ENSG00000120738 <span class="fl">3.545318</span>  <span class="fl">0.4181446</span>  <span class="fl">3.778900</span>
+ENSG00000139687 <span class="fl">3.307090</span>  <span class="fl">2.9668706</span>  <span class="fl">1.625249</span></code></pre></div>
+</div>
+<div id="obtain-candidate-ffls" class="section level5">
+<h5>2. Obtain candidate FFLs</h5>
+<p>Candidate FFLs are assembled using databases of gene interactions (TargetScan v7.2, miRTarBase v7.0, miRDB v6.0, miRanda v3.0, TransmiR v2.0, TRRUST v2.0, and ENCODE). Integrating these databases generates a list of 25,240,974 candidate miRNA-FFLs (<code>candidate_ffls_mirna_all</code> dataframe, created by binding <code>candidate_ffls_mirna_all_part1</code> and <code>candidate_ffls_mirna_all_part2</code>; 25,240,974 x 9) and a list of 178,872 candidate TF-FFLs (<code>candidate_ffls_tf_all</code> dataframe; 178872 x 10).</p>
+<p>To obtain candidate miRNA-FFLs for analyses, subset the <code>candidate_ffls_mirna_all</code> dataframe, selecting for candidate miRNA-FFLs (rows) of interest. To obtain candidate TF-FFLs for analyses, subset the <code>candidate_ffls_tf_all</code> dataframe, selecting for candidate TF-FFLs (rows) of interest.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#candidate_ffls_mirna_all</span>
+candidate_ffls_mirna_all &lt;-<span class="st"> </span><span class="kw">rbind</span>(candidate_ffls_mirna_all_part1, candidate_ffls_mirna_all_part2)
+<span class="kw">head</span>(candidate_ffls_mirna_all)
+      mirna      targetgene              tf TARGETSCAN MIRTARBASE MIRDB
+<span class="dv">1</span> MI0000064 ENSG00000000457 ENSG00000173575          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>
+<span class="dv">2</span> MI0000064 ENSG00000000457 ENSG00000106462          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>
+<span class="dv">3</span> MI0000064 ENSG00000000457 ENSG00000143390          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>
+<span class="dv">4</span> MI0000064 ENSG00000000457 ENSG00000128573          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>
+<span class="dv">5</span> MI0000064 ENSG00000000457 ENSG00000170581          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>
+<span class="dv">6</span> MI0000064 ENSG00000000457 ENSG00000169016          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>
+  MIRANDA TRRUST ENCODE
+<span class="dv">1</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">2</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">3</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">4</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">5</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">6</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+
+<span class="co">#candidate_ffls_tf_all</span>
+<span class="kw">head</span>(candidate_ffls_tf_all)
+               tf      targetgene     mirna TRANSMIR TARGETSCAN MIRTARBASE
+<span class="dv">1</span> ENSG00000004487 ENSG00000000457 MI0000433        <span class="dv">1</span>          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">2</span> ENSG00000004487 ENSG00000000457 MI0000434        <span class="dv">1</span>          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">3</span> ENSG00000004487 ENSG00000001630 MI0000433        <span class="dv">1</span>          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">4</span> ENSG00000004487 ENSG00000001630 MI0000434        <span class="dv">1</span>          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">5</span> ENSG00000004487 ENSG00000002330 MI0000434        <span class="dv">1</span>          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">6</span> ENSG00000004487 ENSG00000002919 MI0000434        <span class="dv">1</span>          <span class="dv">0</span>          <span class="dv">0</span>
+  MIRDB MIRANDA TRRUST ENCODE
+<span class="dv">1</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">2</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">3</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">4</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">5</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">6</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+
+<span class="co">#sample candidate miRNA-FFLs for analyses (a subset of the rows in candidate_ffls_mirna_all): 3 x 9</span>
+sample_candidate_ffls_mirna
+          mirna      targetgene              tf TARGETSCAN MIRTARBASE
+<span class="dv">1</span>     MI0000064 ENSG00000002330 ENSG00000136997          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">30</span>    MI0000433 ENSG00000171552 ENSG00000120738          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">60</span> MIMAT0000062 ENSG00000136997 ENSG00000139687          <span class="dv">0</span>          <span class="dv">0</span>
+   MIRDB MIRANDA TRRUST ENCODE
+<span class="dv">1</span>      <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">30</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>
+<span class="dv">60</span>     <span class="dv">1</span>       <span class="dv">1</span>      <span class="dv">1</span>      <span class="dv">0</span></code></pre></div>
+</div>
+<div id="apply-one-group-method" class="section level5">
+<h5>3. Apply one-group method</h5>
+<p>To apply the two-group method, use the <code>predict_ffls_one_group</code> function. Refer to the documentation of the <code>predict_ffls_one_group</code> function for the description and options of each argument.</p>
+<p>The following is an example for miRNA-FFLs. For TF-FFLs, change the <code>candidate_ffls</code> argument from a dataframe of candidate miRNA-FFLs to a dataframe of candidate TF-FFLs and the <code>ffl_type</code> argument from “miRNA” to “TF”.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#one-group method, miRNA-FFL example</span>
+sample_output_onegroup_mirna_ffls &lt;-<span class="st"> </span>
+<span class="st">  </span><span class="kw">predict_ffls_one_group</span>(<span class="dt">mirna_expr =</span> sample_mirna_expr, 
+                         <span class="dt">mrna_expr =</span> sample_mrna_expr,
+                         <span class="dt">ffl_type =</span> <span class="st">&quot;miRNA&quot;</span>,
+                         <span class="dt">candidate_ffls =</span> sample_candidate_ffls_mirna,
+                         <span class="dt">num_bootstrap_samples =</span> <span class="dv">100</span>, <span class="dt">num_permutations =</span> <span class="dv">100</span>,
+                         <span class="dt">p_value_adjust_method =</span> <span class="st">&quot;fdr&quot;</span>, 
+                         <span class="dt">seed =</span> <span class="dv">12345</span>, 
+                         <span class="dt">parallel =</span> <span class="ot">FALSE</span>)
+<span class="st">'select()'</span> returned <span class="dv">1</span><span class="op">:</span><span class="dv">1</span> mapping between keys and columns
+<span class="st">'select()'</span> returned <span class="dv">1</span><span class="op">:</span><span class="dv">1</span> mapping between keys and columns
+
+sample_output_onegroup_mirna_ffls
+      mirna_name tf_name targetgene_name pFFL p_value_adj p_value
+<span class="dv">1</span>     hsa<span class="op">-</span>let<span class="op">-</span>7c     MYC             BAD <span class="fl">0.84</span>        <span class="fl">0.00</span>    <span class="fl">0.00</span>
+<span class="dv">30</span>    hsa<span class="op">-</span>let<span class="op">-</span>7g    EGR1          BCL2L1 <span class="fl">0.08</span>        <span class="fl">0.40</span>    <span class="fl">0.40</span>
+<span class="dv">60</span> hsa<span class="op">-</span>let<span class="op">-</span>7a<span class="op">-</span>5p     RB1             MYC <span class="fl">0.35</span>        <span class="fl">0.21</span>    <span class="fl">0.14</span>
+          mirna              tf      targetgene TARGETSCAN MIRTARBASE
+<span class="dv">1</span>     MI0000064 ENSG00000136997 ENSG00000002330          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">30</span>    MI0000433 ENSG00000120738 ENSG00000171552          <span class="dv">0</span>          <span class="dv">0</span>
+<span class="dv">60</span> MIMAT0000062 ENSG00000139687 ENSG00000136997          <span class="dv">0</span>          <span class="dv">0</span>
+   MIRDB MIRANDA TRRUST ENCODE alpha0_estimate alpha0_se  alpha0_t
+<span class="dv">1</span>      <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>        <span class="fl">2.215519</span> <span class="fl">0.6790103</span> <span class="fl">3.2628652</span>
+<span class="dv">30</span>     <span class="dv">0</span>       <span class="dv">1</span>      <span class="dv">0</span>      <span class="dv">1</span>        <span class="fl">2.179705</span> <span class="fl">0.7227084</span> <span class="fl">3.0160230</span>
+<span class="dv">60</span>     <span class="dv">1</span>       <span class="dv">1</span>      <span class="dv">1</span>      <span class="dv">0</span>        <span class="fl">2.350696</span> <span class="fl">3.0859215</span> <span class="fl">0.7617484</span>
+   alpha0_p_value alpha1_estimate alpha1_se   alpha1_t alpha1_p_value
+<span class="dv">1</span>     <span class="fl">0.002035157</span>     <span class="op">-</span><span class="fl">1.61279338</span> <span class="fl">0.2349510</span> <span class="op">-</span><span class="fl">6.8643826</span>   <span class="fl">1.186946e-08</span>
+<span class="dv">30</span>    <span class="fl">0.004086758</span>     <span class="op">-</span><span class="fl">0.06431843</span> <span class="fl">0.1395437</span> <span class="op">-</span><span class="fl">0.4609196</span>   <span class="fl">6.469380e-01</span>
+<span class="dv">60</span>    <span class="fl">0.449936886</span>     <span class="op">-</span><span class="fl">0.29615257</span> <span class="fl">0.5990711</span> <span class="op">-</span><span class="fl">0.4943530</span>   <span class="fl">6.233119e-01</span>
+   beta0_estimate  beta0_se  beta0_t beta0_p_value beta1_estimate
+<span class="dv">1</span>        <span class="fl">1.014891</span> <span class="fl">0.5988796</span> <span class="fl">1.694649</span>  <span class="fl">9.662144e-02</span>     <span class="op">-</span><span class="fl">0.2454899</span>
+<span class="dv">30</span>       <span class="fl">2.700946</span> <span class="fl">0.8649310</span> <span class="fl">3.122729</span>  <span class="fl">3.034004e-03</span>      <span class="fl">0.1185937</span>
+<span class="dv">60</span>       <span class="fl">3.990754</span> <span class="fl">0.6617678</span> <span class="fl">6.030444</span>  <span class="fl">2.252757e-07</span>     <span class="op">-</span><span class="fl">0.1713542</span>
+    beta1_se    beta1_t beta1_p_value gamma0_estimate gamma0_se  gamma0_t
+<span class="dv">1</span>  <span class="fl">0.2072242</span> <span class="op">-</span><span class="fl">1.1846585</span>     <span class="fl">0.2419852</span>       <span class="fl">1.4081884</span> <span class="fl">0.5033716</span> <span class="fl">2.7975126</span>
+<span class="dv">30</span> <span class="fl">0.1670047</span>  <span class="fl">0.7101222</span>     <span class="fl">0.4810643</span>       <span class="fl">2.1816604</span> <span class="fl">0.8011160</span> <span class="fl">2.7232765</span>
+<span class="dv">60</span> <span class="fl">0.1284692</span> <span class="op">-</span><span class="fl">1.3338152</span>     <span class="fl">0.1885590</span>       <span class="fl">0.6336133</span> <span class="fl">4.1168375</span> <span class="fl">0.1539078</span>
+   gamma0_p_value gamma1_estimate gamma1_se   gamma1_t gamma1_p_value
+<span class="dv">1</span>     <span class="fl">0.007441208</span>     <span class="op">-</span><span class="fl">1.41750978</span> <span class="fl">0.1716443</span> <span class="op">-</span><span class="fl">8.2584148</span>   <span class="fl">1.050846e-10</span>
+<span class="dv">30</span>    <span class="fl">0.009043415</span>     <span class="op">-</span><span class="fl">0.06423258</span> <span class="fl">0.1417592</span> <span class="op">-</span><span class="fl">0.4531106</span>   <span class="fl">6.525541e-01</span>
+<span class="dv">60</span>    <span class="fl">0.878341412</span>     <span class="op">-</span><span class="fl">0.22242481</span> <span class="fl">0.6138979</span> <span class="op">-</span><span class="fl">0.3623156</span>   <span class="fl">7.187403e-01</span>
+   gamma2_estimate gamma2_se     gamma2_t gamma2_p_value     meanX
+<span class="dv">1</span>     <span class="fl">0.7954853940</span> <span class="fl">0.1178448</span>  <span class="fl">6.750278826</span>   <span class="fl">1.956249e-08</span> <span class="fl">0.6581838</span>
+<span class="dv">30</span>   <span class="op">-</span><span class="fl">0.0007239248</span> <span class="fl">0.1218800</span> <span class="op">-</span><span class="fl">0.005939651</span>   <span class="fl">9.952860e-01</span> <span class="fl">5.1034710</span>
+<span class="dv">60</span>    <span class="fl">0.4302651922</span> <span class="fl">0.6772885</span>  <span class="fl">0.635276130</span>   <span class="fl">5.283293e-01</span> <span class="fl">5.0561189</span>
+       meanM MI0000064 ENSG00000136997 ENSG00000136997 var_epsilon
+<span class="dv">1</span>  <span class="fl">0.8533132</span> <span class="fl">7.9189436</span>      <span class="fl">16.7998341</span>      <span class="op">-</span><span class="fl">1.9440204</span>  <span class="fl">11.3339229</span>
+<span class="dv">30</span> <span class="fl">3.3061851</span> <span class="fl">0.7774839</span>       <span class="fl">1.0517889</span>       <span class="fl">0.0922047</span>   <span class="fl">0.7730808</span>
+<span class="dv">60</span> <span class="fl">3.1243667</span> <span class="fl">0.9702898</span>       <span class="fl">0.7971618</span>      <span class="op">-</span><span class="fl">0.1662633</span>  <span class="fl">17.6302455</span></code></pre></div>
+</div>
+</div>
+<div id="two-group-method" class="section level2">
+<h2>Two-group method</h2>
+<p>The two-group method predicts FFLs unique to one of two biological groups.</p>
+<div id="format-data-1" class="section level5">
+<h5>1. Format data</h5>
+<p>The two-group method requires paired miRNA and mRNA expression data for <em>n</em> samples in one biological group and <em>m</em> samples in another biological group in the following format:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">#####group 1
+<span class="co">#sample miRNA expression data: miRNAs x samples (in this example: 3 x 50)</span>
+sample_mirna_expr_g1
+                   V1        V2       V3       V4         V5        V6
+MI0000064    <span class="fl">1.794920</span> <span class="op">-</span><span class="fl">0.309676</span> <span class="fl">2.059152</span> <span class="fl">2.013765</span> <span class="op">-</span><span class="fl">0.8256095</span> <span class="op">-</span><span class="fl">0.511209</span>
+MI0000433    <span class="fl">3.380672</span>  <span class="fl">5.548398</span> <span class="fl">5.195282</span> <span class="fl">4.193502</span>  <span class="fl">4.8913758</span>  <span class="fl">4.749053</span>
+MIMAT0000062 <span class="fl">3.563854</span>  <span class="fl">4.370740</span> <span class="fl">5.243522</span> <span class="fl">6.058362</span>  <span class="fl">5.8313488</span>  <span class="fl">5.105212</span>
+                   V7        V8        V9      V10      V11       V12
+MI0000064    <span class="fl">1.130522</span> <span class="op">-</span><span class="fl">2.437250</span> <span class="op">-</span><span class="fl">2.775810</span> <span class="fl">3.519273</span> <span class="fl">2.349484</span> <span class="op">-</span><span class="fl">1.914083</span>
+MI0000433    <span class="fl">6.699347</span>  <span class="fl">4.655701</span>  <span class="fl">5.067772</span> <span class="fl">4.349430</span> <span class="fl">4.512361</span>  <span class="fl">5.303151</span>
+MIMAT0000062 <span class="fl">3.258287</span>  <span class="fl">5.645247</span>  <span class="fl">5.097104</span> <span class="fl">4.923266</span> <span class="fl">5.991951</span>  <span class="fl">4.140749</span>
+                   V13       V14      V15      V16      V17       V18
+MI0000064    <span class="op">-</span><span class="fl">5.193571</span> <span class="op">-</span><span class="fl">1.571687</span> <span class="fl">1.947935</span> <span class="fl">2.392836</span> <span class="fl">6.348986</span> <span class="fl">0.7649807</span>
+MI0000433     <span class="fl">4.758026</span>  <span class="fl">4.518266</span> <span class="fl">4.008197</span> <span class="fl">4.719351</span> <span class="fl">5.633017</span> <span class="fl">3.7601817</span>
+MIMAT0000062  <span class="fl">4.718420</span>  <span class="fl">7.066247</span> <span class="fl">4.388447</span> <span class="fl">5.315613</span> <span class="fl">5.660293</span> <span class="fl">3.2777976</span>
+                    V19      V20      V21       V22      V23       V24
+MI0000064    <span class="op">-</span><span class="fl">0.8930935</span> <span class="fl">5.586277</span> <span class="fl">3.755791</span> <span class="op">-</span><span class="fl">3.425916</span> <span class="fl">2.585652</span> <span class="op">-</span><span class="fl">4.512084</span>
+MI0000433     <span class="fl">6.7643141</span> <span class="fl">4.976320</span> <span class="fl">5.199920</span>  <span class="fl">6.347193</span> <span class="fl">5.036073</span>  <span class="fl">5.824581</span>
+MIMAT0000062  <span class="fl">2.8653740</span> <span class="fl">5.068946</span> <span class="fl">5.867822</span>  <span class="fl">2.709956</span> <span class="fl">4.849810</span>  <span class="fl">4.731218</span>
+                  V25       V26       V27       V28      V29      V30
+MI0000064    <span class="fl">1.946968</span> <span class="op">-</span><span class="fl">1.862343</span> <span class="fl">0.1416042</span> <span class="op">-</span><span class="fl">2.143132</span> <span class="fl">2.119845</span> <span class="fl">6.966770</span>
+MI0000433    <span class="fl">3.297328</span>  <span class="fl">5.480950</span> <span class="fl">7.4835501</span>  <span class="fl">5.401365</span> <span class="fl">5.215177</span> <span class="fl">3.184288</span>
+MIMAT0000062 <span class="fl">6.791332</span>  <span class="fl">5.672268</span> <span class="fl">4.7906989</span>  <span class="fl">5.012183</span> <span class="fl">6.534117</span> <span class="fl">5.077292</span>
+                   V31      V32       V33      V34      V35      V36
+MI0000064    <span class="fl">0.5790731</span> <span class="fl">1.623414</span> <span class="op">-</span><span class="fl">1.710388</span> <span class="fl">2.681649</span> <span class="fl">1.736391</span> <span class="fl">0.234707</span>
+MI0000433    <span class="fl">4.0882606</span> <span class="fl">4.950955</span>  <span class="fl">4.594613</span> <span class="fl">6.130382</span> <span class="fl">5.815465</span> <span class="fl">5.076418</span>
+MIMAT0000062 <span class="fl">5.0784375</span> <span class="fl">4.220739</span>  <span class="fl">5.166560</span> <span class="fl">5.265325</span> <span class="fl">5.890781</span> <span class="fl">4.532112</span>
+                   V37      V38      V39      V40      V41       V42
+MI0000064    <span class="op">-</span><span class="fl">3.501608</span> <span class="fl">4.359814</span> <span class="fl">2.676219</span> <span class="fl">1.424795</span> <span class="fl">1.957749</span> <span class="op">-</span><span class="fl">1.158093</span>
+MI0000433     <span class="fl">6.453747</span> <span class="fl">5.374121</span> <span class="fl">4.829096</span> <span class="fl">4.497787</span> <span class="fl">5.543522</span>  <span class="fl">4.494814</span>
+MIMAT0000062  <span class="fl">5.758375</span> <span class="fl">4.358264</span> <span class="fl">5.627672</span> <span class="fl">5.248330</span> <span class="fl">4.299924</span>  <span class="fl">4.432598</span>
+                  V43      V44      V45       V46      V47       V48
+MI0000064    <span class="fl">2.922656</span> <span class="fl">2.148874</span> <span class="fl">1.630874</span> <span class="op">-</span><span class="fl">2.979549</span> <span class="fl">5.996170</span> <span class="op">-</span><span class="fl">3.154419</span>
+MI0000433    <span class="fl">5.786796</span> <span class="fl">5.300949</span> <span class="fl">6.310224</span>  <span class="fl">5.798434</span> <span class="fl">5.850860</span>  <span class="fl">4.556432</span>
+MIMAT0000062 <span class="fl">4.738606</span> <span class="fl">3.936115</span> <span class="fl">4.893631</span>  <span class="fl">5.771104</span> <span class="fl">7.747404</span>  <span class="fl">4.916065</span>
+                   V49       V50
+MI0000064    <span class="op">-</span><span class="fl">1.767224</span> <span class="op">-</span><span class="fl">1.841207</span>
+MI0000433     <span class="fl">4.553225</span>  <span class="fl">5.013305</span>
+MIMAT0000062  <span class="fl">5.543568</span>  <span class="fl">5.752861</span>
+
+<span class="co">#sample mRNA expression data: mRNAs x samples (in this example 5 x 50)</span>
+sample_mrna_expr_g1
+                      V1        V2        V3         V4         V5
+ENSG00000136997 <span class="fl">2.196522</span> <span class="op">-</span><span class="fl">1.424992</span> <span class="op">-</span><span class="fl">5.794998</span> <span class="op">-</span><span class="fl">0.9229269</span> <span class="op">-</span><span class="fl">2.8837704</span>
+ENSG00000002330 <span class="fl">2.109717</span> <span class="op">-</span><span class="fl">3.771615</span> <span class="op">-</span><span class="fl">5.518346</span> <span class="op">-</span><span class="fl">6.1259354</span> <span class="op">-</span><span class="fl">0.6120132</span>
+ENSG00000171552 <span class="fl">1.191326</span>  <span class="fl">3.001120</span>  <span class="fl">2.456053</span>  <span class="fl">0.5657497</span>  <span class="fl">1.7346952</span>
+ENSG00000120738 <span class="fl">3.522282</span>  <span class="fl">3.009794</span>  <span class="fl">2.559474</span>  <span class="fl">4.1994895</span>  <span class="fl">2.8825315</span>
+ENSG00000139687 <span class="fl">3.292940</span>  <span class="fl">2.913292</span>  <span class="fl">1.533641</span>  <span class="fl">1.9168206</span>  <span class="fl">4.0577374</span>
+                      V6        V7        V8         V9        V10
+ENSG00000136997 <span class="fl">5.754241</span> <span class="fl">1.6152445</span>  <span class="fl">2.641810</span> <span class="op">-</span><span class="fl">0.9781178</span>  <span class="fl">0.8557240</span>
+ENSG00000002330 <span class="fl">5.570317</span> <span class="fl">0.4993375</span> <span class="fl">10.999910</span>  <span class="fl">1.3808868</span> <span class="op">-</span><span class="fl">0.6480668</span>
+ENSG00000171552 <span class="fl">2.641769</span> <span class="fl">1.5849790</span>  <span class="fl">1.540424</span>  <span class="fl">1.2075060</span>  <span class="fl">0.8414609</span>
+ENSG00000120738 <span class="fl">3.038210</span> <span class="fl">4.1948056</span>  <span class="fl">3.343958</span>  <span class="fl">2.6709270</span>  <span class="fl">4.6708579</span>
+ENSG00000139687 <span class="fl">2.639679</span> <span class="fl">3.3505938</span>  <span class="fl">3.028258</span>  <span class="fl">3.4730483</span>  <span class="fl">2.0808453</span>
+                       V11       V12       V13      V14        V15
+ENSG00000136997  <span class="fl">4.5405031</span> <span class="op">-</span><span class="fl">4.858961</span>  <span class="fl">5.832784</span> <span class="fl">1.999289</span> <span class="op">-</span><span class="fl">0.5615196</span>
+ENSG00000002330 <span class="op">-</span><span class="fl">0.6991272</span> <span class="op">-</span><span class="fl">6.131919</span> <span class="fl">16.014753</span> <span class="fl">8.742753</span> <span class="op">-</span><span class="fl">1.7648203</span>
+ENSG00000171552  <span class="fl">2.7108900</span>  <span class="fl">3.267602</span>  <span class="fl">1.856849</span> <span class="fl">1.484971</span>  <span class="fl">3.4828912</span>
+ENSG00000120738  <span class="fl">2.0819418</span>  <span class="fl">2.912193</span>  <span class="fl">4.320294</span> <span class="fl">4.730786</span>  <span class="fl">5.1625961</span>
+ENSG00000139687  <span class="fl">2.6241766</span>  <span class="fl">1.187166</span>  <span class="fl">3.288600</span> <span class="fl">2.810377</span>  <span class="fl">3.0178602</span>
+                     V16        V17      V18        V19         V20
+ENSG00000136997 <span class="fl">6.880621</span>  <span class="fl">4.9985785</span> <span class="fl">1.532680</span> <span class="op">-</span><span class="fl">5.2285913</span> <span class="op">-</span><span class="fl">0.05823079</span>
+ENSG00000002330 <span class="fl">3.890550</span> <span class="op">-</span><span class="fl">0.5153313</span> <span class="fl">3.756331</span>  <span class="fl">3.5582751</span> <span class="op">-</span><span class="fl">4.86275929</span>
+ENSG00000171552 <span class="fl">1.837411</span>  <span class="fl">2.0417092</span> <span class="fl">2.483040</span>  <span class="fl">0.8198728</span>  <span class="fl">1.33642626</span>
+ENSG00000120738 <span class="fl">2.684268</span>  <span class="fl">2.4249039</span> <span class="fl">1.593644</span>  <span class="fl">5.2678599</span>  <span class="fl">2.22914607</span>
+ENSG00000139687 <span class="fl">3.650430</span>  <span class="fl">3.3102550</span> <span class="fl">4.668357</span>  <span class="fl">3.6726145</span>  <span class="fl">2.72248201</span>
+                      V21       V22      V23        V24        V25
+ENSG00000136997 <span class="op">-</span><span class="fl">7.614244</span>  <span class="fl">3.046419</span> <span class="fl">4.550216</span>  <span class="fl">1.9054757</span> <span class="op">-</span><span class="fl">4.1772878</span>
+ENSG00000002330 <span class="op">-</span><span class="fl">5.484747</span> <span class="fl">11.651134</span> <span class="fl">3.983297</span> <span class="fl">12.2588652</span> <span class="op">-</span><span class="fl">6.4563330</span>
+ENSG00000171552  <span class="fl">1.365350</span>  <span class="fl">1.298037</span> <span class="fl">2.576850</span> <span class="op">-</span><span class="fl">0.1130804</span>  <span class="fl">2.2609097</span>
+ENSG00000120738  <span class="fl">3.380316</span>  <span class="fl">3.605137</span> <span class="fl">4.019674</span>  <span class="fl">3.4749430</span>  <span class="fl">0.8140536</span>
+ENSG00000139687  <span class="fl">2.853974</span>  <span class="fl">4.701432</span> <span class="fl">3.471358</span>  <span class="fl">3.5817001</span>  <span class="fl">3.6660207</span>
+                     V26       V27       V28       V29        V30
+ENSG00000136997 <span class="fl">6.199953</span>  <span class="fl">1.107470</span> <span class="fl">0.9317538</span>  <span class="fl">2.549596</span>  <span class="op">-</span><span class="fl">7.589003</span>
+ENSG00000002330 <span class="fl">5.397783</span> <span class="op">-</span><span class="fl">3.869701</span> <span class="fl">7.7346693</span> <span class="op">-</span><span class="fl">5.285503</span> <span class="op">-</span><span class="fl">17.337957</span>
+ENSG00000171552 <span class="fl">3.147127</span>  <span class="fl">2.014794</span> <span class="fl">1.6882608</span>  <span class="fl">1.043804</span>   <span class="fl">2.473414</span>
+ENSG00000120738 <span class="fl">3.933192</span>  <span class="fl">3.475435</span> <span class="fl">3.3902816</span>  <span class="fl">2.272672</span>   <span class="fl">3.986556</span>
+ENSG00000139687 <span class="fl">2.221098</span>  <span class="fl">4.163325</span> <span class="fl">1.0354558</span>  <span class="fl">3.769171</span>   <span class="fl">5.259772</span>
+                       V31      V32       V33        V34       V35
+ENSG00000136997 <span class="op">-</span><span class="fl">4.2559596</span> <span class="fl">4.982575</span> <span class="op">-</span><span class="fl">5.746262</span>  <span class="fl">4.9672415</span> <span class="op">-</span><span class="fl">4.136866</span>
+ENSG00000002330  <span class="fl">1.3580344</span> <span class="fl">7.153524</span> <span class="op">-</span><span class="fl">1.376071</span> <span class="op">-</span><span class="fl">0.4606288</span>  <span class="fl">3.525083</span>
+ENSG00000171552  <span class="fl">0.4861359</span> <span class="fl">2.164281</span>  <span class="fl">1.129135</span>  <span class="fl">3.5933290</span>  <span class="fl">2.646598</span>
+ENSG00000120738  <span class="fl">4.4239836</span> <span class="fl">3.484731</span>  <span class="fl">3.349236</span>  <span class="fl">3.8601242</span>  <span class="fl">3.404611</span>
+ENSG00000139687  <span class="fl">2.5227277</span> <span class="fl">2.897419</span>  <span class="fl">3.368696</span>  <span class="fl">2.4645670</span>  <span class="fl">3.506602</span>
+                      V36      V37      V38       V39      V40       V41
+ENSG00000136997 <span class="op">-</span><span class="fl">2.484822</span> <span class="fl">7.450406</span> <span class="fl">2.868905</span> <span class="op">-</span><span class="fl">2.630856</span> <span class="fl">3.190830</span>  <span class="fl">3.246640</span>
+ENSG00000002330 <span class="op">-</span><span class="fl">5.033323</span> <span class="fl">8.754563</span> <span class="fl">1.624407</span> <span class="op">-</span><span class="fl">3.898580</span> <span class="fl">1.429729</span> <span class="op">-</span><span class="fl">1.316941</span>
+ENSG00000171552  <span class="fl">2.357370</span> <span class="fl">2.102393</span> <span class="fl">1.324733</span>  <span class="fl">2.972085</span> <span class="fl">2.755870</span>  <span class="fl">1.571714</span>
+ENSG00000120738  <span class="fl">3.367045</span> <span class="fl">1.480801</span> <span class="fl">4.549803</span>  <span class="fl">3.499881</span> <span class="fl">3.460873</span>  <span class="fl">5.076710</span>
+ENSG00000139687  <span class="fl">2.849443</span> <span class="fl">3.904244</span> <span class="fl">5.242036</span>  <span class="fl">1.804877</span> <span class="fl">2.581477</span>  <span class="fl">3.798251</span>
+                     V42      V43       V44      V45       V46         V47
+ENSG00000136997 <span class="fl">7.854933</span> <span class="fl">5.825634</span> <span class="op">-</span><span class="fl">1.026676</span> <span class="fl">2.565223</span> <span class="op">-</span><span class="fl">2.626936</span>  <span class="op">-</span><span class="fl">1.3878771</span>
+ENSG00000002330 <span class="fl">5.921938</span> <span class="fl">2.022376</span> <span class="op">-</span><span class="fl">6.921540</span> <span class="fl">1.984489</span>  <span class="fl">3.060780</span> <span class="op">-</span><span class="fl">11.2770136</span>
+ENSG00000171552 <span class="fl">1.286075</span> <span class="fl">1.809616</span>  <span class="fl">2.399865</span> <span class="fl">1.022155</span>  <span class="fl">2.183737</span>  <span class="op">-</span><span class="fl">0.1503105</span>
+ENSG00000120738 <span class="fl">2.692349</span> <span class="fl">3.952371</span>  <span class="fl">3.532788</span> <span class="fl">2.904452</span>  <span class="fl">2.857937</span>   <span class="fl">1.8169743</span>
+ENSG00000139687 <span class="fl">3.498172</span> <span class="fl">3.119560</span>  <span class="fl">2.632797</span> <span class="fl">3.262331</span>  <span class="fl">3.262704</span>   <span class="fl">3.6407389</span>
+                     V48        V49       V50
+ENSG00000136997 <span class="fl">2.250405</span>  <span class="fl">6.8611149</span> <span class="op">-</span><span class="fl">2.148230</span>
+ENSG00000002330 <span class="fl">9.091663</span> <span class="fl">12.4617818</span>  <span class="fl">1.131557</span>
+ENSG00000171552 <span class="fl">1.377033</span>  <span class="fl">1.2345607</span>  <span class="fl">2.464309</span>
+ENSG00000120738 <span class="fl">3.545318</span>  <span class="fl">0.4181446</span>  <span class="fl">3.778900</span>
+ENSG00000139687 <span class="fl">3.307090</span>  <span class="fl">2.9668706</span>  <span class="fl">1.625249</span>
+
+#####group 2
+<span class="co">#sample miRNA expression data: miRNAs x samples (in this example: 3 x 50)</span>
+sample_mirna_expr_g2
+                   V1       V2       V3       V4       V5       V6
+MI0000064    <span class="fl">7.585529</span> <span class="fl">7.709466</span> <span class="fl">6.890697</span> <span class="fl">6.546503</span> <span class="fl">7.605887</span> <span class="fl">5.182044</span>
+MI0000433    <span class="fl">3.380672</span> <span class="fl">5.548398</span> <span class="fl">5.195282</span> <span class="fl">4.193502</span> <span class="fl">4.891376</span> <span class="fl">4.749053</span>
+MIMAT0000062 <span class="fl">3.563854</span> <span class="fl">4.370740</span> <span class="fl">5.243522</span> <span class="fl">6.058362</span> <span class="fl">5.831349</span> <span class="fl">5.105212</span>
+                   V7       V8       V9      V10      V11      V12
+MI0000064    <span class="fl">7.630099</span> <span class="fl">6.723816</span> <span class="fl">6.715840</span> <span class="fl">6.080678</span> <span class="fl">6.883752</span> <span class="fl">8.817312</span>
+MI0000433    <span class="fl">6.699347</span> <span class="fl">4.655701</span> <span class="fl">5.067772</span> <span class="fl">4.349430</span> <span class="fl">4.512361</span> <span class="fl">5.303151</span>
+MIMAT0000062 <span class="fl">3.258287</span> <span class="fl">5.645247</span> <span class="fl">5.097104</span> <span class="fl">4.923266</span> <span class="fl">5.991951</span> <span class="fl">4.140749</span>
+                  V13      V14      V15      V16      V17      V18
+MI0000064    <span class="fl">7.370628</span> <span class="fl">7.520216</span> <span class="fl">6.249468</span> <span class="fl">7.816900</span> <span class="fl">6.113642</span> <span class="fl">6.668422</span>
+MI0000433    <span class="fl">4.758026</span> <span class="fl">4.518266</span> <span class="fl">4.008197</span> <span class="fl">4.719351</span> <span class="fl">5.633017</span> <span class="fl">3.760182</span>
+MIMAT0000062 <span class="fl">4.718420</span> <span class="fl">7.066247</span> <span class="fl">4.388447</span> <span class="fl">5.315613</span> <span class="fl">5.660293</span> <span class="fl">3.277798</span>
+                  V19      V20      V21      V22      V23      V24
+MI0000064    <span class="fl">8.120713</span> <span class="fl">7.298724</span> <span class="fl">7.779622</span> <span class="fl">8.455785</span> <span class="fl">6.355672</span> <span class="fl">5.446863</span>
+MI0000433    <span class="fl">6.764314</span> <span class="fl">4.976320</span> <span class="fl">5.199920</span> <span class="fl">6.347193</span> <span class="fl">5.036073</span> <span class="fl">5.824581</span>
+MIMAT0000062 <span class="fl">2.865374</span> <span class="fl">5.068946</span> <span class="fl">5.867822</span> <span class="fl">2.709956</span> <span class="fl">4.849810</span> <span class="fl">4.731218</span>
+                  V25      V26      V27      V28      V29      V30
+MI0000064    <span class="fl">5.402290</span> <span class="fl">8.805098</span> <span class="fl">6.518353</span> <span class="fl">7.620380</span> <span class="fl">7.612123</span> <span class="fl">6.837689</span>
+MI0000433    <span class="fl">3.297328</span> <span class="fl">5.480950</span> <span class="fl">7.483550</span> <span class="fl">5.401365</span> <span class="fl">5.215177</span> <span class="fl">3.184288</span>
+MIMAT0000062 <span class="fl">6.791332</span> <span class="fl">5.672268</span> <span class="fl">4.790699</span> <span class="fl">5.012183</span> <span class="fl">6.534117</span> <span class="fl">5.077292</span>
+                  V31      V32      V33      V34      V35      V36
+MI0000064    <span class="fl">7.811873</span> <span class="fl">9.196834</span> <span class="fl">9.049190</span> <span class="fl">8.632446</span> <span class="fl">7.254271</span> <span class="fl">7.491188</span>
+MI0000433    <span class="fl">4.088261</span> <span class="fl">4.950955</span> <span class="fl">4.594613</span> <span class="fl">6.130382</span> <span class="fl">5.815465</span> <span class="fl">5.076418</span>
+MIMAT0000062 <span class="fl">5.078438</span> <span class="fl">4.220739</span> <span class="fl">5.166560</span> <span class="fl">5.265325</span> <span class="fl">5.890781</span> <span class="fl">4.532112</span>
+                  V37      V38      V39      V40      V41      V42
+MI0000064    <span class="fl">6.675913</span> <span class="fl">5.337950</span> <span class="fl">8.767734</span> <span class="fl">7.025801</span> <span class="fl">8.128511</span> <span class="fl">4.619642</span>
+MI0000433    <span class="fl">6.453747</span> <span class="fl">5.374121</span> <span class="fl">4.829096</span> <span class="fl">4.497787</span> <span class="fl">5.543522</span> <span class="fl">4.494814</span>
+MIMAT0000062 <span class="fl">5.758375</span> <span class="fl">4.358264</span> <span class="fl">5.627672</span> <span class="fl">5.248330</span> <span class="fl">4.299924</span> <span class="fl">4.432598</span>
+                  V43      V44      V45      V46      V47      V48
+MI0000064    <span class="fl">5.939734</span> <span class="fl">7.937141</span> <span class="fl">7.854452</span> <span class="fl">8.460729</span> <span class="fl">5.586901</span> <span class="fl">7.567403</span>
+MI0000433    <span class="fl">5.786796</span> <span class="fl">5.300949</span> <span class="fl">6.310224</span> <span class="fl">5.798434</span> <span class="fl">5.850860</span> <span class="fl">4.556432</span>
+MIMAT0000062 <span class="fl">4.738606</span> <span class="fl">3.936115</span> <span class="fl">4.893631</span> <span class="fl">5.771104</span> <span class="fl">7.747404</span> <span class="fl">4.916065</span>
+                  V49      V50
+MI0000064    <span class="fl">7.583188</span> <span class="fl">5.693201</span>
+MI0000433    <span class="fl">4.553225</span> <span class="fl">5.013305</span>
+MIMAT0000062 <span class="fl">5.543568</span> <span class="fl">5.752861</span>
+
+<span class="co">#sample mRNA expression data: mRNAs x samples (in this example 5 x 50)</span>
+sample_mrna_expr_g2
+                      V1       V2       V3        V4       V5       V6
+ENSG00000136997 <span class="fl">4.459614</span> <span class="fl">6.947693</span> <span class="fl">5.053590</span> <span class="fl">5.3516628</span> <span class="fl">4.329023</span> <span class="fl">5.277954</span>
+ENSG00000002330 <span class="fl">5.223925</span> <span class="fl">3.843777</span> <span class="fl">5.422419</span> <span class="fl">3.6752447</span> <span class="fl">5.141084</span> <span class="fl">4.463952</span>
+ENSG00000171552 <span class="fl">1.191326</span> <span class="fl">3.001120</span> <span class="fl">2.456053</span> <span class="fl">0.5657497</span> <span class="fl">1.734695</span> <span class="fl">2.641769</span>
+ENSG00000120738 <span class="fl">3.522282</span> <span class="fl">3.009794</span> <span class="fl">2.559474</span> <span class="fl">4.1994895</span> <span class="fl">2.882532</span> <span class="fl">3.038210</span>
+ENSG00000139687 <span class="fl">3.292940</span> <span class="fl">2.913292</span> <span class="fl">1.533641</span> <span class="fl">1.9168206</span> <span class="fl">4.057737</span> <span class="fl">2.639679</span>
+                      V7       V8       V9       V10      V11      V12
+ENSG00000136997 <span class="fl">5.691171</span> <span class="fl">5.823795</span> <span class="fl">7.145065</span> <span class="fl">2.6530560</span> <span class="fl">5.149592</span> <span class="fl">3.657469</span>
+ENSG00000002330 <span class="fl">4.688394</span> <span class="fl">6.556110</span> <span class="fl">4.551967</span> <span class="fl">5.3211235</span> <span class="fl">3.769828</span> <span class="fl">3.675941</span>
+ENSG00000171552 <span class="fl">1.584979</span> <span class="fl">1.540424</span> <span class="fl">1.207506</span> <span class="fl">0.8414609</span> <span class="fl">2.710890</span> <span class="fl">3.267602</span>
+ENSG00000120738 <span class="fl">4.194806</span> <span class="fl">3.343958</span> <span class="fl">2.670927</span> <span class="fl">4.6708579</span> <span class="fl">2.081942</span> <span class="fl">2.912193</span>
+ENSG00000139687 <span class="fl">3.350594</span> <span class="fl">3.028258</span> <span class="fl">3.473048</span> <span class="fl">2.0808453</span> <span class="fl">2.624177</span> <span class="fl">1.187166</span>
+                     V13      V14      V15      V16      V17      V18
+ENSG00000136997 <span class="fl">5.553303</span> <span class="fl">6.589963</span> <span class="fl">4.413120</span> <span class="fl">3.167623</span> <span class="fl">5.888139</span> <span class="fl">6.593488</span>
+ENSG00000002330 <span class="fl">6.261242</span> <span class="fl">6.319232</span> <span class="fl">4.919246</span> <span class="fl">4.494910</span> <span class="fl">4.947846</span> <span class="fl">5.628861</span>
+ENSG00000171552 <span class="fl">1.856849</span> <span class="fl">1.484971</span> <span class="fl">3.482891</span> <span class="fl">1.837411</span> <span class="fl">2.041709</span> <span class="fl">2.483040</span>
+ENSG00000120738 <span class="fl">4.320294</span> <span class="fl">4.730786</span> <span class="fl">5.162596</span> <span class="fl">2.684268</span> <span class="fl">2.424904</span> <span class="fl">1.593644</span>
+ENSG00000139687 <span class="fl">3.288600</span> <span class="fl">2.810377</span> <span class="fl">3.017860</span> <span class="fl">3.650430</span> <span class="fl">3.310255</span> <span class="fl">4.668357</span>
+                      V19      V20      V21      V22      V23        V24
+ENSG00000136997 <span class="fl">5.5168547</span> <span class="fl">3.704328</span> <span class="fl">5.054616</span> <span class="fl">4.215351</span> <span class="fl">3.950647</span>  <span class="fl">7.3305120</span>
+ENSG00000002330 <span class="fl">7.1800024</span> <span class="fl">4.930983</span> <span class="fl">6.544864</span> <span class="fl">6.321452</span> <span class="fl">5.322152</span>  <span class="fl">6.5309551</span>
+ENSG00000171552 <span class="fl">0.8198728</span> <span class="fl">1.336426</span> <span class="fl">1.365350</span> <span class="fl">1.298037</span> <span class="fl">2.576850</span> <span class="op">-</span><span class="fl">0.1130804</span>
+ENSG00000120738 <span class="fl">5.2678599</span> <span class="fl">2.229146</span> <span class="fl">3.380316</span> <span class="fl">3.605137</span> <span class="fl">4.019674</span>  <span class="fl">3.4749430</span>
+ENSG00000139687 <span class="fl">3.6726145</span> <span class="fl">2.722482</span> <span class="fl">2.853974</span> <span class="fl">4.701432</span> <span class="fl">3.471358</span>  <span class="fl">3.5817001</span>
+                      V25      V26      V27      V28      V29      V30
+ENSG00000136997 <span class="fl">6.4027054</span> <span class="fl">5.942601</span> <span class="fl">5.826258</span> <span class="fl">4.188460</span> <span class="fl">5.476248</span> <span class="fl">6.021258</span>
+ENSG00000002330 <span class="fl">4.5787603</span> <span class="fl">3.841179</span> <span class="fl">3.154632</span> <span class="fl">6.157325</span> <span class="fl">2.876450</span> <span class="fl">3.803968</span>
+ENSG00000171552 <span class="fl">2.2609097</span> <span class="fl">3.147127</span> <span class="fl">2.014794</span> <span class="fl">1.688261</span> <span class="fl">1.043804</span> <span class="fl">2.473414</span>
+ENSG00000120738 <span class="fl">0.8140536</span> <span class="fl">3.933192</span> <span class="fl">3.475435</span> <span class="fl">3.390282</span> <span class="fl">2.272672</span> <span class="fl">3.986556</span>
+ENSG00000139687 <span class="fl">3.6660207</span> <span class="fl">2.221098</span> <span class="fl">4.163325</span> <span class="fl">1.035456</span> <span class="fl">3.769171</span> <span class="fl">5.259772</span>
+                      V31      V32      V33      V34      V35      V36
+ENSG00000136997 <span class="fl">5.6453831</span> <span class="fl">6.043144</span> <span class="fl">4.695631</span> <span class="fl">7.477111</span> <span class="fl">5.971221</span> <span class="fl">6.867099</span>
+ENSG00000002330 <span class="fl">6.6421920</span> <span class="fl">5.883655</span> <span class="fl">5.524876</span> <span class="fl">3.815341</span> <span class="fl">7.655788</span> <span class="fl">3.952086</span>
+ENSG00000171552 <span class="fl">0.4861359</span> <span class="fl">2.164281</span> <span class="fl">1.129135</span> <span class="fl">3.593329</span> <span class="fl">2.646598</span> <span class="fl">2.357370</span>
+ENSG00000120738 <span class="fl">4.4239836</span> <span class="fl">3.484731</span> <span class="fl">3.349236</span> <span class="fl">3.860124</span> <span class="fl">3.404611</span> <span class="fl">3.367045</span>
+ENSG00000139687 <span class="fl">2.5227277</span> <span class="fl">2.897419</span> <span class="fl">3.368696</span> <span class="fl">2.464567</span> <span class="fl">3.506602</span> <span class="fl">2.849443</span>
+                     V37      V38      V39      V40      V41      V42
+ENSG00000136997 <span class="fl">5.672042</span> <span class="fl">4.692047</span> <span class="fl">5.536524</span> <span class="fl">5.824870</span> <span class="fl">4.036099</span> <span class="fl">4.144917</span>
+ENSG00000002330 <span class="fl">3.988877</span> <span class="fl">5.668922</span> <span class="fl">5.129177</span> <span class="fl">4.577423</span> <span class="fl">3.859736</span> <span class="fl">3.706285</span>
+ENSG00000171552 <span class="fl">2.102393</span> <span class="fl">1.324733</span> <span class="fl">2.972085</span> <span class="fl">2.755870</span> <span class="fl">1.571714</span> <span class="fl">1.286075</span>
+ENSG00000120738 <span class="fl">1.480801</span> <span class="fl">4.549803</span> <span class="fl">3.499881</span> <span class="fl">3.460873</span> <span class="fl">5.076710</span> <span class="fl">2.692349</span>
+ENSG00000139687 <span class="fl">3.904244</span> <span class="fl">5.242036</span> <span class="fl">1.804877</span> <span class="fl">2.581477</span> <span class="fl">3.798251</span> <span class="fl">3.498172</span>
+                     V43      V44      V45      V46        V47      V48
+ENSG00000136997 <span class="fl">6.886947</span> <span class="fl">4.608181</span> <span class="fl">4.019367</span> <span class="fl">5.687332</span>  <span class="fl">4.4949565</span> <span class="fl">7.157720</span>
+ENSG00000002330 <span class="fl">4.405301</span> <span class="fl">3.499186</span> <span class="fl">5.015856</span> <span class="fl">5.540170</span>  <span class="fl">3.4527080</span> <span class="fl">5.849653</span>
+ENSG00000171552 <span class="fl">1.809616</span> <span class="fl">2.399865</span> <span class="fl">1.022155</span> <span class="fl">2.183737</span> <span class="op">-</span><span class="fl">0.1503105</span> <span class="fl">1.377033</span>
+ENSG00000120738 <span class="fl">3.952371</span> <span class="fl">3.532788</span> <span class="fl">2.904452</span> <span class="fl">2.857937</span>  <span class="fl">1.8169743</span> <span class="fl">3.545318</span>
+ENSG00000139687 <span class="fl">3.119560</span> <span class="fl">2.632797</span> <span class="fl">3.262331</span> <span class="fl">3.262704</span>  <span class="fl">3.6407389</span> <span class="fl">3.307090</span>
+                      V49      V50
+ENSG00000136997 <span class="fl">4.4002024</span> <span class="fl">4.305453</span>
+ENSG00000002330 <span class="fl">5.8960132</span> <span class="fl">5.138691</span>
+ENSG00000171552 <span class="fl">1.2345607</span> <span class="fl">2.464309</span>
+ENSG00000120738 <span class="fl">0.4181446</span> <span class="fl">3.778900</span>
+ENSG00000139687 <span class="fl">2.9668706</span> <span class="fl">1.625249</span></code></pre></div>
+</div>
+<div id="obtain-candidate-ffls-1" class="section level5">
+<h5>2. Obtain candidate FFLs</h5>
+<p>Obtain candidate FFLs for the two-group method in the same way as for the one-group method detailed above.</p>
+</div>
+<div id="apply-two-group-method" class="section level5">
+<h5>3. Apply two-group method</h5>
+<p>To apply the two-group method, use the <code>predict_ffls_two_group</code> function. Refer to the documentation of the <code>predict_ffls_two_group</code> function for the description and options of each argument.</p>
+<p>The following is an example for miRNA-FFLs. For TF-FFLs, change the <code>candidate_ffls</code> argument from a dataframe of candidate miRNA-FFLs to a dataframe of candidate TF-FFLs and the <code>ffl_type</code> argument from “miRNA” to “TF”.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#two-group method, miRNA-FFL example</span>
+sample_output_twogroups_mirna_ffls &lt;-<span class="st"> </span>
+<span class="st">  </span><span class="kw">predict_ffls_two_groups</span>(<span class="dt">mirna_expr_g1 =</span> sample_mirna_expr_g1, 
+                          <span class="dt">mrna_expr_g1 =</span> sample_mrna_expr_g1,
+                          <span class="dt">mirna_expr_g2 =</span> sample_mirna_expr_g2, 
+                          <span class="dt">mrna_expr_g2 =</span> sample_mrna_expr_g2,
+                          <span class="dt">ffl_type =</span> <span class="st">&quot;miRNA&quot;</span>,
+                          <span class="dt">candidate_ffls =</span> sample_candidate_ffls_mirna,
+                          <span class="dt">num_bootstrap_samples =</span> <span class="dv">100</span>, 
+                          <span class="dt">num_permutations =</span> <span class="dv">100</span>,
+                          <span class="dt">p_value_adjust_method =</span> <span class="st">&quot;fdr&quot;</span>, 
+                          <span class="dt">seed =</span> <span class="dv">12345</span>,
+                          <span class="dt">parallel =</span> <span class="ot">FALSE</span>)
+<span class="st">'select()'</span> returned <span class="dv">1</span><span class="op">:</span><span class="dv">1</span> mapping between keys and columns
+<span class="st">'select()'</span> returned <span class="dv">1</span><span class="op">:</span><span class="dv">1</span> mapping between keys and columns
+sample_output_twogroups_mirna_ffls
+      mirna_name tf_name targetgene_name pFFL_group1 pFFL_group2
+<span class="dv">1</span>     hsa<span class="op">-</span>let<span class="op">-</span>7c     MYC             BAD        <span class="fl">0.84</span>        <span class="fl">0.04</span>
+<span class="dv">30</span>    hsa<span class="op">-</span>let<span class="op">-</span>7g    EGR1          BCL2L1        <span class="fl">0.08</span>        <span class="fl">0.08</span>
+<span class="dv">60</span> hsa<span class="op">-</span>let<span class="op">-</span>7a<span class="op">-</span>5p     RB1             MYC        <span class="fl">0.35</span>        <span class="fl">0.14</span>
+   <span class="kw">delta_pFFL_</span>(group1<span class="op">-</span>group2) p_value_adj p_value        mirna
+<span class="dv">1</span>                        <span class="fl">0.80</span>        <span class="fl">0.00</span>    <span class="fl">0.00</span>    MI0000064
+<span class="dv">30</span>                       <span class="fl">0.00</span>        <span class="fl">1.00</span>    <span class="fl">1.00</span>    MI0000433
+<span class="dv">60</span>                       <span class="fl">0.21</span>        <span class="fl">0.93</span>    <span class="fl">0.62</span> MIMAT0000062
+                tf      targetgene TARGETSCAN MIRTARBASE MIRDB MIRANDA
+<span class="dv">1</span>  ENSG00000136997 ENSG00000002330          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>       <span class="dv">1</span>
+<span class="dv">30</span> ENSG00000120738 ENSG00000171552          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">0</span>       <span class="dv">1</span>
+<span class="dv">60</span> ENSG00000139687 ENSG00000136997          <span class="dv">0</span>          <span class="dv">0</span>     <span class="dv">1</span>       <span class="dv">1</span>
+   TRRUST ENCODE alpha0_g1_estimate alpha0_g1_se alpha0_g1_t
+<span class="dv">1</span>       <span class="dv">0</span>      <span class="dv">1</span>           <span class="fl">2.215519</span>    <span class="fl">0.6790103</span>   <span class="fl">3.2628652</span>
+<span class="dv">30</span>      <span class="dv">0</span>      <span class="dv">1</span>           <span class="fl">2.179705</span>    <span class="fl">0.7227084</span>   <span class="fl">3.0160230</span>
+<span class="dv">60</span>      <span class="dv">1</span>      <span class="dv">0</span>           <span class="fl">2.350696</span>    <span class="fl">3.0859215</span>   <span class="fl">0.7617484</span>
+   alpha0_g1_p_value alpha1_g1_estimate alpha1_g1_se alpha1_g1_t
+<span class="dv">1</span>        <span class="fl">0.002035157</span>        <span class="op">-</span><span class="fl">1.61279338</span>    <span class="fl">0.2349510</span>  <span class="op">-</span><span class="fl">6.8643826</span>
+<span class="dv">30</span>       <span class="fl">0.004086758</span>        <span class="op">-</span><span class="fl">0.06431843</span>    <span class="fl">0.1395437</span>  <span class="op">-</span><span class="fl">0.4609196</span>
+<span class="dv">60</span>       <span class="fl">0.449936886</span>        <span class="op">-</span><span class="fl">0.29615257</span>    <span class="fl">0.5990711</span>  <span class="op">-</span><span class="fl">0.4943530</span>
+   alpha1_g1_p_value beta0_g1_estimate beta0_g1_se beta0_g1_t
+<span class="dv">1</span>       <span class="fl">1.186946e-08</span>          <span class="fl">1.014891</span>   <span class="fl">0.5988796</span>   <span class="fl">1.694649</span>
+<span class="dv">30</span>      <span class="fl">6.469380e-01</span>          <span class="fl">2.700946</span>   <span class="fl">0.8649310</span>   <span class="fl">3.122729</span>
+<span class="dv">60</span>      <span class="fl">6.233119e-01</span>          <span class="fl">3.990754</span>   <span class="fl">0.6617678</span>   <span class="fl">6.030444</span>
+   beta0_g1_p_value beta1_g1_estimate beta1_g1_se beta1_g1_t
+<span class="dv">1</span>      <span class="fl">9.662144e-02</span>        <span class="op">-</span><span class="fl">0.2454899</span>   <span class="fl">0.2072242</span> <span class="op">-</span><span class="fl">1.1846585</span>
+<span class="dv">30</span>     <span class="fl">3.034004e-03</span>         <span class="fl">0.1185937</span>   <span class="fl">0.1670047</span>  <span class="fl">0.7101222</span>
+<span class="dv">60</span>     <span class="fl">2.252757e-07</span>        <span class="op">-</span><span class="fl">0.1713542</span>   <span class="fl">0.1284692</span> <span class="op">-</span><span class="fl">1.3338152</span>
+   beta1_g1_p_value gamma0_g1_estimate gamma0_g1_se gamma0_g1_t
+<span class="dv">1</span>         <span class="fl">0.2419852</span>          <span class="fl">1.4081884</span>    <span class="fl">0.5033716</span>   <span class="fl">2.7975126</span>
+<span class="dv">30</span>        <span class="fl">0.4810643</span>          <span class="fl">2.1816604</span>    <span class="fl">0.8011160</span>   <span class="fl">2.7232765</span>
+<span class="dv">60</span>        <span class="fl">0.1885590</span>          <span class="fl">0.6336133</span>    <span class="fl">4.1168375</span>   <span class="fl">0.1539078</span>
+   gamma0_g1_p_value gamma1_g1_estimate gamma1_g1_se gamma1_g1_t
+<span class="dv">1</span>        <span class="fl">0.007441208</span>        <span class="op">-</span><span class="fl">1.41750978</span>    <span class="fl">0.1716443</span>  <span class="op">-</span><span class="fl">8.2584148</span>
+<span class="dv">30</span>       <span class="fl">0.009043415</span>        <span class="op">-</span><span class="fl">0.06423258</span>    <span class="fl">0.1417592</span>  <span class="op">-</span><span class="fl">0.4531106</span>
+<span class="dv">60</span>       <span class="fl">0.878341412</span>        <span class="op">-</span><span class="fl">0.22242481</span>    <span class="fl">0.6138979</span>  <span class="op">-</span><span class="fl">0.3623156</span>
+   gamma1_g1_p_value gamma2_g1_estimate gamma2_g1_se  gamma2_g1_t
+<span class="dv">1</span>       <span class="fl">1.050846e-10</span>       <span class="fl">0.7954853940</span>    <span class="fl">0.1178448</span>  <span class="fl">6.750278826</span>
+<span class="dv">30</span>      <span class="fl">6.525541e-01</span>      <span class="op">-</span><span class="fl">0.0007239248</span>    <span class="fl">0.1218800</span> <span class="op">-</span><span class="fl">0.005939651</span>
+<span class="dv">60</span>      <span class="fl">7.187403e-01</span>       <span class="fl">0.4302651922</span>    <span class="fl">0.6772885</span>  <span class="fl">0.635276130</span>
+   gamma2_g1_p_value  meanX_g1  meanM_g1 MI0000064 ENSG00000136997
+<span class="dv">1</span>       <span class="fl">1.956249e-08</span> <span class="fl">0.6581838</span> <span class="fl">0.8533132</span> <span class="fl">7.9189436</span>      <span class="fl">16.7998341</span>
+<span class="dv">30</span>      <span class="fl">9.952860e-01</span> <span class="fl">5.1034710</span> <span class="fl">3.3061851</span> <span class="fl">0.7774839</span>       <span class="fl">1.0517889</span>
+<span class="dv">60</span>      <span class="fl">5.283293e-01</span> <span class="fl">5.0561189</span> <span class="fl">3.1243667</span> <span class="fl">0.9702898</span>       <span class="fl">0.7971618</span>
+   ENSG00000136997 var_epsilon_g1 alpha0_g2_estimate alpha0_g2_se
+<span class="dv">1</span>       <span class="op">-</span><span class="fl">1.9440204</span>     <span class="fl">11.3339229</span>           <span class="fl">4.071757</span>    <span class="fl">1.0669636</span>
+<span class="dv">30</span>       <span class="fl">0.0922047</span>      <span class="fl">0.7730808</span>           <span class="fl">2.179705</span>    <span class="fl">0.7227084</span>
+<span class="dv">60</span>      <span class="op">-</span><span class="fl">0.1662633</span>     <span class="fl">17.6302455</span>           <span class="fl">4.826605</span>    <span class="fl">0.8487561</span>
+   alpha0_g2_t alpha0_g2_p_value alpha1_g2_estimate alpha1_g2_se
+<span class="dv">1</span>     <span class="fl">3.816210</span>      <span class="fl">3.877775e-04</span>         <span class="fl">0.12747819</span>    <span class="fl">0.1469410</span>
+<span class="dv">30</span>    <span class="fl">3.016023</span>      <span class="fl">4.086758e-03</span>        <span class="op">-</span><span class="fl">0.06431843</span>    <span class="fl">0.1395437</span>
+<span class="dv">60</span>    <span class="fl">5.686680</span>      <span class="fl">7.520009e-07</span>         <span class="fl">0.09576979</span>    <span class="fl">0.1647693</span>
+   alpha1_g2_t alpha1_g2_p_value beta0_g2_estimate beta0_g2_se beta0_g2_t
+<span class="dv">1</span>    <span class="fl">0.8675470</span>         <span class="fl">0.3899590</span>          <span class="fl">5.323570</span>   <span class="fl">1.0894329</span>   <span class="fl">4.886552</span>
+<span class="dv">30</span>  <span class="op">-</span><span class="fl">0.4609196</span>         <span class="fl">0.6469380</span>          <span class="fl">2.700946</span>   <span class="fl">0.8649310</span>   <span class="fl">3.122729</span>
+<span class="dv">60</span>   <span class="fl">0.5812355</span>         <span class="fl">0.5638013</span>          <span class="fl">3.990754</span>   <span class="fl">0.6617678</span>   <span class="fl">6.030444</span>
+   beta0_g2_p_value beta1_g2_estimate beta1_g2_se  beta1_g2_t
+<span class="dv">1</span>      <span class="fl">1.185093e-05</span>      <span class="op">-</span><span class="fl">0.001774752</span>   <span class="fl">0.1500354</span> <span class="op">-</span><span class="fl">0.01182889</span>
+<span class="dv">30</span>     <span class="fl">3.034004e-03</span>       <span class="fl">0.118593713</span>   <span class="fl">0.1670047</span>  <span class="fl">0.71012218</span>
+<span class="dv">60</span>     <span class="fl">2.252757e-07</span>      <span class="op">-</span><span class="fl">0.171354228</span>   <span class="fl">0.1284692</span> <span class="op">-</span><span class="fl">1.33381525</span>
+   beta1_g2_p_value gamma0_g2_estimate gamma0_g2_se gamma0_g2_t
+<span class="dv">1</span>         <span class="fl">0.9906112</span>           <span class="fl">3.880115</span>     <span class="fl">1.318579</span>    <span class="fl">2.942648</span>
+<span class="dv">30</span>        <span class="fl">0.4810643</span>           <span class="fl">2.181660</span>     <span class="fl">0.801116</span>    <span class="fl">2.723277</span>
+<span class="dv">60</span>        <span class="fl">0.1885590</span>           <span class="fl">3.993228</span>     <span class="fl">1.121977</span>    <span class="fl">3.559100</span>
+   gamma0_g2_p_value gamma1_g2_estimate gamma1_g2_se gamma1_g2_t
+<span class="dv">1</span>       <span class="fl">0.0050407293</span>         <span class="fl">0.12754208</span>    <span class="fl">0.1483958</span>   <span class="fl">0.8594723</span>
+<span class="dv">30</span>      <span class="fl">0.0090434155</span>        <span class="op">-</span><span class="fl">0.06423258</span>    <span class="fl">0.1417592</span>  <span class="op">-</span><span class="fl">0.4531106</span>
+<span class="dv">60</span>      <span class="fl">0.0008634986</span>         <span class="fl">0.13155314</span>    <span class="fl">0.1673079</span>   <span class="fl">0.7862937</span>
+   gamma1_g2_p_value gamma2_g2_estimate gamma2_g2_se  gamma2_g2_t
+<span class="dv">1</span>          <span class="fl">0.3944427</span>       <span class="fl">0.0359987063</span>     <span class="fl">0.142760</span>  <span class="fl">0.252162360</span>
+<span class="dv">30</span>         <span class="fl">0.6525541</span>      <span class="op">-</span><span class="fl">0.0007239248</span>     <span class="fl">0.121880</span> <span class="op">-</span><span class="fl">0.005939651</span>
+<span class="dv">60</span>         <span class="fl">0.4356421</span>       <span class="fl">0.2088267982</span>     <span class="fl">0.184584</span>  <span class="fl">1.131337730</span>
+   gamma2_g2_p_value meanX_g2 meanM_g2 MI0000064 ENSG00000136997
+<span class="dv">1</span>          <span class="fl">0.8020150</span> <span class="fl">7.179566</span> <span class="fl">5.310828</span> <span class="fl">1.1784509</span>       <span class="fl">1.2733314</span>
+<span class="dv">30</span>         <span class="fl">0.9952860</span> <span class="fl">5.103471</span> <span class="fl">3.306185</span> <span class="fl">0.7774839</span>       <span class="fl">1.0517889</span>
+<span class="dv">60</span>         <span class="fl">0.2636527</span> <span class="fl">5.056119</span> <span class="fl">3.124367</span> <span class="fl">0.9702898</span>       <span class="fl">0.7971618</span>
+   ENSG00000136997 var_epsilon_g2
+<span class="dv">1</span>     <span class="op">-</span><span class="fl">0.002091458</span>      <span class="fl">1.2975481</span>
+<span class="dv">30</span>     <span class="fl">0.092204702</span>      <span class="fl">0.7730808</span>
+<span class="dv">60</span>    <span class="op">-</span><span class="fl">0.166263262</span>      <span class="fl">1.3094802</span></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
